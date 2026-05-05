@@ -1,0 +1,18 @@
+// Write your overrides
+@font-face {
+    font-family: roboto;
+    src: url(../fonts/Roboto/Roboto/roboto.ttf) format('truetype');
+  }
+
+.text-22 {
+    font-size: 22px;
+}
+.font-roboto {
+    font-family: 'roboto';
+    
+}
+
+.requireText::after {
+    content: '*';
+    color: red !important;
+  }

@@ -1,0 +1,8 @@
+@use "_global";
+@use "vue3-perfect-scrollbar/dist/vue3-perfect-scrollbar.min.css";
+@use "_classes";
+.v-table--density-default>.v-table__wrapper>table>tbody>tr>td,
+.v-table--density-default>.v-table__wrapper>table>thead>tr>td,
+.v-table--density-default>.v-table__wrapper>table>tfoot>tr>td {
+    height: auto !important;
+}
