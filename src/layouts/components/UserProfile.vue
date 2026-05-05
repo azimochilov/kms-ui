@@ -13,6 +13,7 @@ const fullName = computed(() => {
 })
 
 const roleLabel = computed(() => profile.value?.role || 'User')
+const avatarSrc = computed(() => profile.value?.avatar_url || avatar1)
 
 const loadProfile = async () => {
   try {
@@ -42,7 +43,7 @@ const logout = () => {
 <template>
   <VBadge dot location="bottom right" offset-x="3" offset-y="3" bordered color="success">
     <VAvatar class="cursor-pointer" color="primary" variant="tonal">
-      <VImg :src="avatar1" />
+      <VImg :src="avatarSrc" />
 
       <!-- SECTION Menu -->
       <VMenu activator="parent" width="230" location="bottom end" offset="14px">
@@ -53,7 +54,7 @@ const logout = () => {
               <VListItemAction start>
                 <VBadge dot location="bottom right" offset-x="3" offset-y="3" color="success">
                   <VAvatar color="primary" variant="tonal">
-                    <VImg :src="avatar1" />
+                    <VImg :src="avatarSrc" />
                   </VAvatar>
                 </VBadge>
               </VListItemAction>
@@ -74,33 +75,6 @@ const logout = () => {
             </template>
 
             <VListItemTitle>Profile</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Settings -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon class="me-2" icon="tabler-settings" size="22" />
-            </template>
-
-            <VListItemTitle>Settings</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Pricing -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon class="me-2" icon="tabler-currency-dollar" size="22" />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 FAQ -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon class="me-2" icon="tabler-help" size="22" />
-            </template>
-
-            <VListItemTitle>FAQ</VListItemTitle>
           </VListItem>
 
           <!-- Divider -->

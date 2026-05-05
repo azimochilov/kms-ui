@@ -1,5 +1,6 @@
 <script setup>
 import { useToast } from '@/@core/stores/toastConfig'
+import avatar1 from '@images/avatars/avatar-1.png'
 
 definePage({
   meta: {
@@ -13,13 +14,20 @@ const toast = useToast()
 const loading = ref(false)
 const savingProfile = ref(false)
 const savingPassword = ref(false)
+const avatarFile = ref(null)
+const avatarPreview = ref(null)
+const avatarInput = ref(null)
 
 const profileForm = ref({
   username: '',
   first_name: '',
   last_name: '',
   email: '',
+  role: '',
+  avatar_url: null,
 })
+
+const isAdmin = computed(() => profileForm.value.role === 'admin')
 
 const passwordForm = ref({
   old_password: '',
@@ -37,6 +45,8 @@ const loadProfile = async () => {
       first_name: res?.first_name ?? '',
       last_name: res?.last_name ?? '',
       email: res?.email ?? '',
+      role: res?.role ?? '',
+      avatar_url: res?.avatar_url ?? null,
     }
 
     useCookie('userData').value = res
@@ -53,19 +63,25 @@ const loadProfile = async () => {
 const updateProfile = async () => {
   savingProfile.value = true
   try {
-    const payload = {
-      username: profileForm.value.username,
-      first_name: profileForm.value.first_name,
-      last_name: profileForm.value.last_name,
-      email: profileForm.value.email,
+    const payload = new FormData()
+    payload.append('first_name', profileForm.value.first_name)
+    payload.append('last_name', profileForm.value.last_name)
+    if (isAdmin.value) {
+      payload.append('username', profileForm.value.username)
+      payload.append('email', profileForm.value.email)
     }
+    if (avatarFile.value)
+      payload.append('avatar', avatarFile.value)
 
     const res = await $api('users/profile', {
-      method: 'PUT',
+      method: 'PATCH',
       body: payload,
     })
 
     useCookie('userData').value = res
+    profileForm.value.avatar_url = res?.avatar_url ?? profileForm.value.avatar_url
+    avatarFile.value = null
+    avatarPreview.value = null
     toast.successToast('Profile updated')
   }
   catch (error) {
@@ -75,6 +91,21 @@ const updateProfile = async () => {
   finally {
     savingProfile.value = false
   }
+}
+
+const onAvatarChange = (event) => {
+  const file = event?.target?.files?.[0]
+  if (!file) {
+    avatarFile.value = null
+    avatarPreview.value = null
+    return
+  }
+  avatarFile.value = file
+  avatarPreview.value = URL.createObjectURL(file)
+}
+
+const openAvatarPicker = () => {
+  avatarInput.value?.click()
 }
 
 const changePassword = async () => {
@@ -121,6 +152,27 @@ onMounted(() => {
         <VCardText>
           <VForm @submit.prevent="updateProfile">
             <VRow>
+              <VCol cols="12" class="d-flex align-center gap-4">
+                <VAvatar size="72" color="primary" variant="tonal">
+                  <VImg :src="avatarPreview || profileForm.avatar_url || avatar1" />
+                </VAvatar>
+                <input
+                  ref="avatarInput"
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
+                  @change="onAvatarChange"
+                >
+                <VBtn
+                  variant="tonal"
+                  prepend-icon="tabler-camera"
+                  :disabled="loading || savingProfile"
+                  @click="openAvatarPicker"
+                >
+                  Change photo
+                </VBtn>
+              </VCol>
+
               <VCol cols="12" md="6">
                 <AppTextField
                   v-model="profileForm.first_name"
@@ -141,6 +193,7 @@ onMounted(() => {
                 <AppTextField
                   v-model="profileForm.username"
                   label="Username"
+                  :readonly="!isAdmin"
                   :disabled="loading || savingProfile"
                 />
               </VCol>
@@ -150,6 +203,7 @@ onMounted(() => {
                   v-model="profileForm.email"
                   label="Email"
                   type="email"
+                  :readonly="!isAdmin"
                   :disabled="loading || savingProfile"
                 />
               </VCol>

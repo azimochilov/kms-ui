@@ -45,6 +45,7 @@ declare module 'vue-router/auto/routes' {
     'customers': RouteRecordInfo<'customers', '/customers', Record<never, never>, Record<never, never>>,
     'customers-add-client': RouteRecordInfo<'customers-add-client', '/customers/addClient', Record<never, never>, Record<never, never>>,
     'customers-client-id': RouteRecordInfo<'customers-client-id', '/customers/client/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
+    'faq': RouteRecordInfo<'faq', '/faq', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,
     'not-authorized': RouteRecordInfo<'not-authorized', '/not-authorized', Record<never, never>, Record<never, never>>,
     'profile': RouteRecordInfo<'profile', '/profile', Record<never, never>, Record<never, never>>,

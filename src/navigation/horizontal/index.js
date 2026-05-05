@@ -34,7 +34,7 @@ export default [
   {
     title: 'settings',
     to: { name: 'settings' },
-    icon: { icon: 'tabler-settings' },
+    icon: { icon: 'tabler-user-cog' },
     action: 'read',
     subject: 'AclDemo',
   },
@@ -56,6 +56,13 @@ export default [
     title: 'tokens.title',
     to: { name: 'tokens' },
     icon: { icon: 'tabler-device-usb' },
+    action: 'read',
+    subject: 'AclDemo',
+  },
+  {
+    title: 'FAQ',
+    to: { name: 'faq' },
+    icon: { icon: 'tabler-help' },
     action: 'read',
     subject: 'AclDemo',
   },
