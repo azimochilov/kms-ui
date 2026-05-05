@@ -6,12 +6,22 @@ import { defineStore } from "pinia";
 export const useClient = defineStore("client", {
 
     state: () => ({
+        clientApiPrefix: 'clients/',
         clients: {
-            data: []
-        }
+            data: [],
+            pagination: {
+                total: 0,
+            },
+        },
 
     }),
     actions: {
+        async fetchFromAvailableEndpoints(query = {}) {
+            const res = await $api('clients/', { query })
+            this.clientApiPrefix = 'clients/'
+            return res
+        },
+
         // creat client 
         async createUser(data) {
             return await $api('api/user/store ', {
@@ -22,22 +32,30 @@ export const useClient = defineStore("client", {
 
         // get client
         async fetchClient(per_page, page) {
-            return await $api(`api/client?per_page=${per_page}&page=${page}`).then(res => {
-                this.clients = res.result
+            const query = {}
+            if (per_page && per_page > 0) {
+                query.page_size = per_page
+                query.per_page = per_page
+            }
+            if (page)
+                query.page = page
+
+            return await this.fetchFromAvailableEndpoints(query).then(res => {
+                this.clients = res?.result ?? res
             })
         },
 
         // delete client 
         async deleteClient(id) {
-            return await $api(`api/client/delete/${id}`, {
+            return await $api(`${this.clientApiPrefix}${id}/`, {
                 method: "delete"
             })
         },
 
         // updata client
         async updateClient(id, data) {
-            return await $api(`api/client/update/${id}`, {
-                method: 'post',
+            return await $api(`${this.clientApiPrefix}${id}/`, {
+                method: 'PATCH',
                 body: data,
                 headers: {
                     maxRedirects: 0
@@ -48,7 +66,7 @@ export const useClient = defineStore("client", {
         },
         // get one client 
         async fetOneClient(id) {
-            return await $api(`api/client/${id}`)
+            return await $api(`${this.clientApiPrefix}${id}/`)
         },
         async changePassword(id, data) {
             return await $api(`api/user/password/${id}`, {
@@ -57,7 +75,7 @@ export const useClient = defineStore("client", {
             })
         },
         async fetchClientOneData(id) {
-            return await $api(`api/client/edit/${id}`)
+            return await $api(`${this.clientApiPrefix}${id}/`)
         },
         async createDevice(data) {
             return await $api('api/device/store', {
@@ -73,7 +91,7 @@ export const useClient = defineStore("client", {
         async createClients(data) {
             console.log(data);
 
-            return await $api(`api/client/store`, {
+            return await $api(`${this.clientApiPrefix}`, {
                 method: 'Post',
                 body: data,
                 redirect: 'error'
