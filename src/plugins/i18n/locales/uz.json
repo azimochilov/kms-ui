@@ -22,11 +22,14 @@
     "emai_address": "E-pochta manzili",
     "user_type": "Foydalanuvchi turi",
     "branch": "Filial",
+    "status": "Holat",
     "activity": "Faoliyat",
     "send": "Yuborish",
     "edit": "Tahrirlash",
     "change": "O'zgartirish",
-    "user_deleted": "Foydalanuvchi muvaffaqiyatli o'chirildi"
+    "user_deleted": "Foydalanuvchi muvaffaqiyatli o'chirildi",
+    "active": "Faol",
+    "inactive": "Nofaol"
   },
   "login": {
     "welcome_kms": "KMSga xush kelibsiz!",

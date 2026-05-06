@@ -126,14 +126,14 @@ const handleDrawerModelValueUpdate = val => {
 watch(() => props.update_dataId, (id) => {
   if (id) {
     store.fetOneUser(id).then(res => {
-      let data = res.result
+      const data = res?.result ?? res
       userData.value = {
         username: data.username || null,
         email: data.email || null,
-        f_name: data.f_name || null,
-        l_name: data.l_name || null,
-        type: data.type || null,
-        active: data.status == 1 ? true : false,
+        f_name: data.f_name ?? data.first_name ?? null,
+        l_name: data.l_name ?? data.last_name ?? null,
+        type: data.type ?? (data.role === 'limited_admin' ? 'limited' : data.role) ?? null,
+        active: Number(data.status) === 1,
         mfo: data.mfo,
         branch: data.branch
       }

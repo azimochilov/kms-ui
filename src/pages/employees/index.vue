@@ -26,15 +26,19 @@ const passwordId = ref(null)
 
 
 const deleteItemConfirm = () => {
-    store.deleteUsers(itemId.value)
+    store.deleteUserByRowId(itemId.value)
         .then(() => {
             storetoast.successToast(t('settingsModule.user_deleted'))
             deleteDialog.value = false
             itemId.value = null
             refresh()
         }).catch(error => {
-            storetoast.errorsNotfications(error.response._data.errors)
-
+            const errors = error?.response?._data?.errors
+            const message = error?.response?._data?.message || error?.message
+            if (errors)
+                storetoast.errorsNotfications(errors)
+            else
+                storetoast.errorToast(message || t('error'))
 
         })
 }
@@ -53,6 +57,7 @@ const headers = [
     { title: t('settingsModule.branch'), key: 'branch' },
 
     { title: t('settingsModule.type'), key: 'type' },
+    { title: t('settingsModule.status'), key: 'status' },
     { title: t('settingsModule.mfo'), key: 'mfo' },
     { title: t('settingsModule.action'), key: 'actions' },
 ]
@@ -60,13 +65,29 @@ const headers = [
 
 
 const deleteUser = (id) => {
+    if (!id) {
+        storetoast.errorToast(t('error'))
+        return
+    }
+
     itemId.value = id
     deleteDialog.value = true
 }
 
 const editUser = (id) => {
+    if (!id) {
+        storetoast.errorToast(t('error'))
+        return
+    }
+
     updateDataId.value = id
     isAddNewUserDrawerVisible.value = true
+}
+
+const getUserId = (tableItem) => {
+    const rawItem = tableItem?.raw || tableItem
+
+    return rawItem?.id ?? rawItem?.user_id ?? rawItem?.pk ?? rawItem?.uid ?? null
 }
 
 const refresh = () => {
@@ -145,21 +166,21 @@ onMounted(() => {
 <VListItemTitle>View</VListItemTitle>
 </VListItem> -->
 
-                                <VListItem link @click="editUser(item.id)">
+                                <VListItem link @click="editUser(getUserId(item))">
                                     <template #prepend>
                                         <VIcon icon="tabler-pencil" />
                                     </template>
                                     <VListItemTitle>Edit</VListItemTitle>
                                 </VListItem>
 
-                                <VListItem @click="deleteUser(item.id)">
+                                <VListItem @click="deleteUser(getUserId(item))">
                                     <template #prepend>
                                         <VIcon icon="tabler-trash" />
                                     </template>
                                     <VListItemTitle>Delete</VListItemTitle>
                                 </VListItem>
 
-                                <VListItem @click="isDialogVisible = true, passwordId = item.id">
+                                <VListItem @click="isDialogVisible = true, passwordId = getUserId(item)">
                                     <template #prepend>
                                         <VIcon icon="tabler-lock-cog" />
                                     </template>
@@ -179,6 +200,12 @@ onMounted(() => {
 
             <template #item.id="{ index }">
                 <span>{{ index + 1 }}</span>
+            </template>
+
+            <template #item.status="{ item }">
+                <VChip :color="item?.status === 1 ? 'success' : 'secondary'" size="small">
+                    {{ item?.status === 1 ? t('settingsModule.active') : t('settingsModule.inactive') }}
+                </VChip>
             </template>
 
 
