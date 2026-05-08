@@ -29,19 +29,28 @@
     const deleteItemConfirm = () => {
         store.deleteClient(itemId.value)
             .then(() => {
-                storetoast.successToast(t('settingsModule.user_deleted'))
+                storetoast.successToast(t('settingsModule.client_deleted'))
                 deleteDialog.value = false
                 itemId.value = null
                 refresh()
             }).catch(error => {
-                storetoast.errorsNotfications(error.response._data.errors)
+                const message = error?.response?._data?.message
+                    ?? error?.response?._data?.detail
+                    ?? error?.response?._data?.errors
+                    ?? error?.message
+                    ?? t('error')
+                storetoast.errorToast(String(message))
+                deleteDialog.value = false
 
 
             })
     }
 
 
-    const options = ref({ page: 1, itemsPerPage: 12, sortBy: [''], sortDesc: [false] })
+    const options = ref({ page: 1, itemsPerPage: 10, sortBy: [''], sortDesc: [false] })
+    const searchQuery = ref('')
+    const statusFilter = ref(null)
+    let searchDebounceTimer = null
     const isAddNewUserDrawerVisible = ref(false)
     const load = ref(true)
     const store = useClient()
@@ -53,8 +62,6 @@
         { title: '№', key: 'id' },
         { title: t('clients.owner'), key: 'cname' },
         { title: t('clients.city'), key: 'location' },
-        { title: t('clients.address'), key: 'state' },
-        { title: t('clients.mail'), key: 'email' },
         { title: t('clients.subdivision'), key: 'org_unit' },
         { title: t('clients.inn'), key: 'inn' },
         { title: t('settingsModule.branch'), key: 'branch' },
@@ -73,13 +80,35 @@
         isAddNewUserDrawerVisible.value = true
     }
 
+    const totalPages = computed(() => {
+        const total = Number(store.clients?.pagination?.total ?? 0)
+        const perPage = Number(options.value.itemsPerPage ?? 0)
+
+        if (perPage <= 0)
+            return 1
+
+        return Math.max(1, Math.ceil(total / perPage))
+    })
+
+    const tableItemsPerPage = computed(() => {
+        if (Number(options.value.itemsPerPage) === -1)
+            return -1
+
+        return Number(options.value.itemsPerPage) || 10
+    })
+
+    const statusOptions = computed(() => [
+        { title: t('settingsModule.active'), value: 1 },
+        { title: t('settingsModule.inactive'), value: 0 },
+    ])
+
     const refresh = () => {
         load.value = true
-        store.fetchClient(options.value.itemsPerPage, options.value.page)
+        store.fetchClient(options.value.itemsPerPage, options.value.page, {
+            search: searchQuery.value,
+            status: statusFilter.value,
+        })
             .then(() => {
-                useClient
-                useClient
-
                 load.value = false
             }).catch(error => {
 
@@ -96,6 +125,22 @@
             })
     }
 
+    const onItemsPerPageChange = value => {
+        const normalizedValue = typeof value === 'object' && value !== null
+            ? (value.value ?? value.id ?? value.title ?? value)
+            : value
+
+        const parsed = Number(normalizedValue)
+        if (Number.isFinite(parsed)) {
+            options.value.itemsPerPage = parsed
+            return
+        }
+
+        if (String(normalizedValue).toLowerCase() === 'all') {
+            options.value.itemsPerPage = -1
+        }
+    }
+
 
 
 
@@ -105,6 +150,13 @@
         refresh()
 
     })
+
+    onBeforeUnmount(() => {
+        if (searchDebounceTimer) {
+            clearTimeout(searchDebounceTimer)
+            searchDebounceTimer = null
+        }
+    })
     const getRowProps = (item) => {
 
         if (!item) return {}
@@ -113,22 +165,48 @@
         return {}
     }
 
-    watch(() => options.value.itemsPerPage, (newValue) => {
-        if (newValue) {
-            refresh()
+    watch(() => options.value.itemsPerPage, newValue => {
+        if (!Number.isFinite(Number(newValue)))
+            return
+        if (options.value.page !== 1) {
+            options.value.page = 1
+            return
         }
-    }, { deep: true })
+        refresh()
+    })
+
+    watch(() => options.value.page, newValue => {
+        if (!newValue)
+            return
+        refresh()
+    })
+
+    watch(statusFilter, () => {
+        if (options.value.page !== 1) {
+            options.value.page = 1
+            return
+        }
+        refresh()
+    })
+
+    watch(searchQuery, () => {
+        if (searchDebounceTimer)
+            clearTimeout(searchDebounceTimer)
+
+        searchDebounceTimer = setTimeout(() => {
+            if (options.value.page !== 1) {
+                options.value.page = 1
+                return
+            }
+            refresh()
+        }, 350)
+    })
 
 
 </script>
 
     <template>
         <VCard>
-            <button @click="$router.push('/customers/addClient')" class="border">add Client</button>
-
-
-
-
             <VRow class="px-4 py-4">
                 <VCol>
                     <p class="text-22 font-roboto">
@@ -137,41 +215,15 @@
                 </VCol>
                 <VCol class="d-flex justify-end">
 
-
                     <VCol cols="12" sm="6">
-                        <AppTextField :placeholder="$t('search')" density="compact"
+                        <AppTextField v-model="searchQuery" :placeholder="$t('search')" density="compact"
                             prepend-inner-icon="tabler-search" />
                     </VCol>
                     <!-- 👉 Select Status -->
                     <VCol cols="12" sm="4">
-                        <AppSelect :placeholder="$t('select_status')" :items="[1, 2, 3, 4]" clearable
+                        <AppSelect v-model="statusFilter" :placeholder="$t('select_status')" :items="statusOptions"
+                            item-title="title" item-value="value" clearable
                             clear-icon="tabler-x" />
-                    </VCol>
-
-                    <VCol cols="12" sm="5">
-                        <div class="w-100 h-100 border rounded d-flex align-center justify-space-between px-4">
-                            <div>
-                                {{ $t('clients.all') }}
-                            </div>
-                            <div>
-                                <VIcon size="24" icon="tabler-circle-check" color="#28C76F" class="mr-1" />
-                                <span>3</span>
-                            </div>
-                            <div>
-                                <VIcon size="24" icon="tabler-circle-x" color="#FF4C51" class="mr-1" />
-                                <span>5</span>
-                            </div>
-                            <div>
-                                <VIcon size="24" icon="tabler-history" color="#00BAD1" class="mr-1" />
-                                <span>3</span>
-                            </div>
-
-
-
-
-
-                        </div>
-
                     </VCol>
 
                     <VCol col="12">
@@ -182,18 +234,19 @@
                             { value: 50, title: '50' },
                             { value: 100, title: '100' },
                             { value: -1, title: 'All' },
-                        ]" style="inline-size: 6.25rem;"
-                            @update:model-value="options.itemsPerPage = parseInt($event, 10)" />
+                        ]" item-title="title" item-value="value" style="inline-size: 6.25rem;"
+                            @update:model-value="onItemsPerPageChange" />
                     </VCol>
 
                 </VCol>
 
             </VRow>
-            <VDataTable :headers="headers" :items="store.clients.data || []" :loading="load" :hover="true"
+            <VDataTable :headers="headers" :items="store.clients.data || []" :items-per-page="tableItemsPerPage"
+                :loading="load" :hover="true"
                 loading-text="yuklanmoqda">
-                <template #item="{ item, columns }">
+                <template #item="{ item }">
                     <tr :class="getRowProps(item)">
-                        <td v-for="column in columns" :key="column.key">
+                        <td v-for="column in headers" :key="column.key">
 
                             <slot :name="`item.${column.key}`" :item="item" :index="item.index">
 
@@ -261,11 +314,13 @@
                 <!-- bottom pagination  -->
                 <template #bottom>
                     <VCardText class="pt-2">
-                        <div class="d-flex justify-end">
+                        <div class="d-flex align-center justify-space-between">
+                            <VBtn color="primary" @click="$router.push('/customers/addClient')">
+                                <VIcon size="22" icon="tabler-plus" class="me-1" />{{ $t('settingsModule.add') }}
+                            </VBtn>
                             <VPagination v-if="store.clients?.pagination" v-model="options.page"
                                 :total-visible="$vuetify.display.smAndDown ? 3 : 5"
-                                :length="Math.ceil(store.clients?.pagination?.total / options.itemsPerPage)"
-                                @click="refresh" />
+                                :length="totalPages" />
                         </div>
                     </VCardText>
 

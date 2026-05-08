@@ -31,17 +31,43 @@ export const useClient = defineStore("client", {
         },
 
         // get client
-        async fetchClient(per_page, page) {
+        async fetchClient(per_page, page, filters = {}) {
             const query = {}
-            if (per_page && per_page > 0) {
-                query.page_size = per_page
-                query.per_page = per_page
+            const perPageNumber = Number(per_page)
+            if (Number.isFinite(perPageNumber) && perPageNumber > 0) {
+                query.size = perPageNumber
+                query.page_size = perPageNumber
+                query.per_page = perPageNumber
             }
-            if (page)
-                query.page = page
+            else if (perPageNumber === -1) {
+                // "All" option from UI: request max allowed page size
+                query.size = 500
+                query.page_size = 500
+                query.per_page = 500
+            }
+            query.page = page || 1
+            const search = String(filters?.search ?? '').trim()
+            if (search)
+                query.search = search
+            const statusValue = filters?.status
+            if (statusValue !== null && statusValue !== undefined && statusValue !== '')
+                query.status = Number(statusValue)
 
             return await this.fetchFromAvailableEndpoints(query).then(res => {
-                this.clients = res?.result ?? res
+                const payload = res?.result ?? res
+                const data = Array.isArray(payload)
+                    ? payload
+                    : Array.isArray(payload?.data)
+                        ? payload.data
+                        : Array.isArray(payload?.results)
+                            ? payload.results
+                            : []
+                const total = payload?.pagination?.total ?? payload?.count ?? data.length
+
+                this.clients = {
+                    data,
+                    pagination: { total },
+                }
             })
         },
 
@@ -78,13 +104,13 @@ export const useClient = defineStore("client", {
             return await $api(`${this.clientApiPrefix}${id}/`)
         },
         async createDevice(data) {
-            return await $api('api/device/store', {
-                method: 'Post',
+            return await $api('devices/', {
+                method: 'POST',
                 body: data
             })
         },
         async deleteDevice(id) {
-            return await $api(`api/device/delete/${id}`, {
+            return await $api(`devices/${id}/delete/`, {
                 method: 'delete'
             })
         },

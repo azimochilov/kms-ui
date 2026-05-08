@@ -29,12 +29,18 @@ const isDialogVisible = ref(false)
 const deleteItemConfirm = () => {
     store.deleteDevice(itemId.value)
         .then(() => {
-            storetoast.successToast(t('settingsModule.user_deleted'))
+            storetoast.successToast(t('settingsModule.device_deleted'))
             deleteDialog.value = false
             itemId.value = null
             refresh()
         }).catch(error => {
-            storetoast.errorsNotfications(error.response._data.errors)
+            const message = error?.response?._data?.message
+                ?? error?.response?._data?.detail
+                ?? error?.response?._data?.errors
+                ?? error?.message
+                ?? t('error')
+            storetoast.errorToast(String(message))
+            deleteDialog.value = false
 
 
         })

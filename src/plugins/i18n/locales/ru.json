@@ -27,11 +27,14 @@
     "edit": "Редактировать",
     "change": "Изменять",
     "user_deleted": "Пользователь успешно удален.",
+    "client_deleted": "Клиент успешно удален.",
+    "active": "Активный",
+    "inactive": "Неактивный",
+    "device_deleted": "Устройство успешно удалено.",
     "seria_number": "Seriya raqami",
     "is_used": "Xolat",
     "used": "Foydalanilgan",
     "not_used": "Foydalanilmagan"
-
   },
   "login": {
     "welcome_kms": "Добро пожаловать в KMS!",
