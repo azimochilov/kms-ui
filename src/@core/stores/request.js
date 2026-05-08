@@ -122,6 +122,7 @@ export const useRequests = defineStore("request", {
 
         async createStatus(id, data) {
             if (data?.status === '1') {
+                // approve — o'zgarmaydi, to'g'ri ishlaydi
                 const formData = new FormData()
                 formData.append('id', String(id))
                 formData.append('cng', String(data?.cng ?? 0))
@@ -136,15 +137,41 @@ export const useRequests = defineStore("request", {
                 })
             }
 
+            // TUZATISH: request_id body'dan olib tashlandi — URL'dagi id yetarli
             return await $api(`${this.requestApiPrefix}${id}/reject/`, {
                 method: 'POST',
                 body: {
-                    request_id: id,
                     client_id: data?.client_id,
-                    comment: data?.comment ?? '',
+                    comment:   data?.comment ?? '',
+                    // request_id: id  <-- bu satr o'chirildi
                 },
             })
         },
+        // async createStatus(id, data) {
+        //     if (data?.status === '1') {
+        //         const formData = new FormData()
+        //         formData.append('id', String(id))
+        //         formData.append('cng', String(data?.cng ?? 0))
+        //         if (data?.user_id)
+        //             formData.append('user_id', String(data.user_id))
+        //         if (data?.password)
+        //             formData.append('password', String(data.password))
+
+        //         return await $api(`${this.requestApiPrefix}${id}/approve/`, {
+        //             method: 'POST',
+        //             body: formData,
+        //         })
+        //     }
+
+        //     return await $api(`${this.requestApiPrefix}${id}/reject/`, {
+        //         method: 'POST',
+        //         body: {
+        //             request_id: id,
+        //             client_id: data?.client_id,
+        //             comment: data?.comment ?? '',
+        //         },
+        //     })
+        // },
         async deleteRequest(id) {
             return await $api(`${this.requestApiPrefix}${id}/delete/`, {
                 method: 'POST'
