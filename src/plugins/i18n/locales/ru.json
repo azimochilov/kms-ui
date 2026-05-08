@@ -26,7 +26,12 @@
     "send": "Отправить",
     "edit": "Редактировать",
     "change": "Изменять",
-    "user_deleted": "Пользователь успешно удален."
+    "user_deleted": "Пользователь успешно удален.",
+    "seria_number": "Seriya raqami",
+    "is_used": "Xolat",
+    "used": "Foydalanilgan",
+    "not_used": "Foydalanilmagan"
+
   },
   "login": {
     "welcome_kms": "Добро пожаловать в KMS!",
@@ -93,7 +98,46 @@
     "mobile": "Mobil",
     "updated": "Yangilangan"
   },
-  "tokens": {
-    "title": " Токены"
-  }
+  "tokenModule": {
+    "title": "Управление токенами",
+    "add": "Добавить",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "upload_csv": "Загрузить CSV",
+    "allocate": "Распределить",
+    "assign": "Привязать",
+    "filter": "Фильтр",
+    "seria_number": "Серийный номер",
+    "is_used": "Статус",
+    "branch_user": "Филиал",
+    "actions": "Действия",
+    "used": "Использован",
+    "not_used": "Не использован",
+    "all": "Все",
+    "drag_or_click": "Перетащите CSV файл сюда или нажмите",
+    "only_csv": "Принимаются только файлы формата .csv",
+    "csv_hint": "В CSV файле столбец должен называться: ",
+    "csv_hint2": " или ",
+    "upload": "Загрузить",
+    "select_file": "Сначала выберите файл",
+    "upload_success": "{count} токенов успешно загружено",
+    "upload_error": "Ошибка при загрузке",
+    "select_branch": "Выберите пользователя филиала",
+    "quantity": "Количество",
+    "quantity_hint": "Сколько токенов распределить",
+    "allocate_btn": "Распределить",
+    "allocate_success": "{count} токенов успешно распределено",
+    "allocate_error": "Ошибка при распределении",
+    "fill_all": "Заполните все поля",
+    "assign_hint": "Введите серийные номера полученных токенов, по одному в строке",
+    "seria_numbers": "Серийные номера",
+    "seria_placeholder": "ABC123\nABC124\nABC125",
+    "seria_count": "Введено {count} серийных номеров",
+    "assign_btn": "Привязать",
+    "assign_success": "Привязано {updated} токенов (запрошено {total})",
+    "assign_error": "Ошибка при привязке",
+    "enter_seria": "Введите хотя бы один серийный номер",
+    "token_deleted": "Токен успешно удалён"
+  },
+  "cancel": "Отмена"
 }

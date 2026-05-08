@@ -17,9 +17,19 @@ export const useUsers = defineStore("users", {
         },
 
         // get users 
+        // async fetchUsers(per_page, page) {
+        //     return await $api(`users?per_page=${per_page}&page=${page}`).then(res => {
+        //         this.users = res.results
+        //         console.log(this.users);
+        //     })
+        // },
+
         async fetchUsers(per_page, page) {
-            return await $api(`api/user?per_page=${per_page}&page=${page}`).then(res => {
-                this.users = res.results
+            return await $api(`tokens?per_page=${per_page}&page=${page}`).then(res => {
+                this.users = {
+                    data: res.results,           // template .data kutmoqda
+                    pagination: { total: res.count }  // template .pagination.total kutmoqda
+                }
             })
         },
 

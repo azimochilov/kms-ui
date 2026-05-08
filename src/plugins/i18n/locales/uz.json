@@ -26,7 +26,11 @@
     "send": "Yuborish",
     "edit": "Tahrirlash",
     "change": "O'zgartirish",
-    "user_deleted": "Foydalanuvchi muvaffaqiyatli o'chirildi"
+    "user_deleted": "Foydalanuvchi muvaffaqiyatli o'chirildi",
+    "seria_number": "Seriya raqami",
+    "is_used": "Xolat",
+    "used": "Foydalanilgan",
+    "not_used": "Foydalanilmagan"
   },
   "login": {
     "welcome_kms": "KMSga xush kelibsiz!",
@@ -79,7 +83,7 @@
     "rejected": "Rad etilgan"
   },
   "certificates": {
-    "title": "Сертификати",
+    "title": "Sertifikatlar",
     "owner_name": "F.I.O egasi",
     "token_serial_number": "Token seriya raqami",
     "certificate_serial_number": "Sertifikat seriya raqami",
@@ -93,7 +97,46 @@
     "mobile": "Mobil",
     "updated": "Yangilangan"
   },
-  "tokens": {
-    "title": "Tokenlar"
-  }
+  "tokenModule": {
+    "title": "Tokenlar boshqaruvi",
+    "add": "Qo'shish",
+    "edit": "Tahrirlash",
+    "delete": "O'chirish",
+    "upload_csv": "CSV yuklash",
+    "allocate": "Taqsimlash",
+    "assign": "Biriktirish",
+    "filter": "Filter",
+    "seria_number": "Seriya raqami",
+    "is_used": "Holati",
+    "branch_user": "Branch",
+    "actions": "Amallar",
+    "used": "Ishlatilgan",
+    "not_used": "Ishlatilmagan",
+    "all": "Barchasi",
+    "drag_or_click": "CSV faylni bu yerga tashlang yoki bosing",
+    "only_csv": "Faqat .csv formatdagi fayllar qabul qilinadi",
+    "csv_hint": "CSV faylda ustun nomi: ",
+    "csv_hint2": " yoki ",
+    "upload": "Yuklash",
+    "select_file": "Avval fayl tanlang",
+    "upload_success": "{count} ta token muvaffaqiyatli yuklandi",
+    "upload_error": "Yuklashda xatolik yuz berdi",
+    "select_branch": "Branch userni tanlang",
+    "quantity": "Miqdor",
+    "quantity_hint": "Nechta token taqsimlansin",
+    "allocate_btn": "Taqsimlash",
+    "allocate_success": "{count} ta token muvaffaqiyatli taqsimlandi",
+    "allocate_error": "Taqsimlashda xatolik yuz berdi",
+    "fill_all": "Barcha maydonlarni to'ldiring",
+    "assign_hint": "Qabul qilingan tokenlar seriya raqamlarini qator-qator kiriting",
+    "seria_numbers": "Seriya raqamlari",
+    "seria_placeholder": "ABC123\nABC124\nABC125",
+    "seria_count": "{count} ta seriya raqami kiritildi",
+    "assign_btn": "Biriktirish",
+    "assign_success": "{updated} ta token biriktirildi (jami {total} so'raldi)",
+    "assign_error": "Biriktirishda xatolik yuz berdi",
+    "enter_seria": "Kamida bitta seriya raqami kiriting",
+    "token_deleted": "Token muvaffaqiyatli o'chirildi"
+  },
+  "cancel": "Bekor qilish"
 }

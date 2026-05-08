@@ -53,7 +53,7 @@ export default [
     subject: 'AclDemo',
   },
   {
-    title: 'tokens.title',
+    title: 'tokenModule.title',
     to: { name: 'tokens' },
     icon: { icon: 'tabler-device-usb' },
     action: 'read',
