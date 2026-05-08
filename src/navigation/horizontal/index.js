@@ -33,7 +33,7 @@ export default [
   },
   {
     title: 'settings',
-    to: { name: 'settings' },
+    to: { name: 'employees' },
     icon: { icon: 'tabler-user-cog' },
     action: 'read',
     subject: 'AclDemo',
