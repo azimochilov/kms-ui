@@ -19,12 +19,12 @@ export const { themeConfig, layoutConfig } = defineThemeConfig({
       defaultLocale: 'uz',
       langConfig: [
         {
-          label: 'Uzbek',
+          label: "O'zbekcha",
           i18nLang: 'uz',
           isRTL: false,
         },      
         {
-          label: 'Russia',
+          label: 'Русский',
           i18nLang: 'ru',
           isRTL: false,
         },

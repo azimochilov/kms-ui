@@ -22,6 +22,7 @@
     "emai_address": "Адрес электронной почты",
     "user_type": "Тип пользователя",
     "branch": "Филиал",
+    "status": "Статус",
     "activity": "Активность",
     "send": "Отправить",
     "edit": "Редактировать",
@@ -142,5 +143,29 @@
     "enter_seria": "Введите хотя бы один серийный номер",
     "token_deleted": "Токен успешно удалён"
   },
-  "cancel": "Отмена"
+  "cancel": "Отмена",
+  "profile": {
+    "title": "Профиль",
+    "change_photo": "Изменить фото",
+    "first_name": "Имя",
+    "last_name": "Фамилия",
+    "username": "Имя пользователя",
+    "email": "Email",
+    "save_profile": "Сохранить профиль",
+    "change_password": "Изменить пароль",
+    "old_password": "Старый пароль",
+    "new_password": "Новый пароль",
+    "confirm_new_password": "Подтвердите новый пароль",
+    "update_password": "Обновить пароль",
+    "updated": "Профиль обновлен",
+    "password_updated": "Пароль обновлен",
+    "password_mismatch": "Новые пароли не совпадают",
+    "failed_load": "Не удалось загрузить профиль",
+    "failed_update": "Не удалось обновить профиль",
+    "failed_change_password": "Не удалось изменить пароль"
+  },
+  "profile_menu": {
+    "profile": "Профиль",
+    "logout": "Выйти"
+  }
 }

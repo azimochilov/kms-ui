@@ -10,6 +10,7 @@ definePage({
 })
 
 const toast = useToast()
+const { t } = useI18n()
 
 const loading = ref(false)
 const savingProfile = ref(false)
@@ -52,7 +53,7 @@ const loadProfile = async () => {
     useCookie('userData').value = res
   }
   catch (error) {
-    const message = error?.response?._data?.message ?? error?.message ?? 'Failed to load profile'
+    const message = error?.response?._data?.message ?? error?.message ?? t('profile.failed_load')
     toast.errorToast(message)
   }
   finally {
@@ -82,10 +83,10 @@ const updateProfile = async () => {
     profileForm.value.avatar_url = res?.avatar_url ?? profileForm.value.avatar_url
     avatarFile.value = null
     avatarPreview.value = null
-    toast.successToast('Profile updated')
+    toast.successToast(t('profile.updated'))
   }
   catch (error) {
-    const message = error?.response?._data?.message ?? error?.message ?? 'Failed to update profile'
+    const message = error?.response?._data?.message ?? error?.message ?? t('profile.failed_update')
     toast.errorToast(message)
   }
   finally {
@@ -110,7 +111,7 @@ const openAvatarPicker = () => {
 
 const changePassword = async () => {
   if (passwordForm.value.new_password !== passwordForm.value.new_password_confirm) {
-    toast.errorToast('New passwords do not match')
+    toast.errorToast(t('profile.password_mismatch'))
     return
   }
 
@@ -124,7 +125,7 @@ const changePassword = async () => {
       },
     })
 
-    toast.successToast(res?.message ?? 'Password updated')
+    toast.successToast(res?.message ?? t('profile.password_updated'))
     passwordForm.value = {
       old_password: '',
       new_password: '',
@@ -132,7 +133,7 @@ const changePassword = async () => {
     }
   }
   catch (error) {
-    const message = error?.response?._data?.message ?? error?.message ?? 'Failed to change password'
+    const message = error?.response?._data?.message ?? error?.message ?? t('profile.failed_change_password')
     toast.errorToast(message)
   }
   finally {
@@ -148,7 +149,7 @@ onMounted(() => {
 <template>
   <VRow>
     <VCol cols="12" md="7">
-      <VCard title="Profile">
+      <VCard :title="t('profile.title')">
         <VCardText>
           <VForm @submit.prevent="updateProfile">
             <VRow>
@@ -169,14 +170,14 @@ onMounted(() => {
                   :disabled="loading || savingProfile"
                   @click="openAvatarPicker"
                 >
-                  Change photo
+                  {{ t('profile.change_photo') }}
                 </VBtn>
               </VCol>
 
               <VCol cols="12" md="6">
                 <AppTextField
                   v-model="profileForm.first_name"
-                  label="First name"
+                  :label="t('profile.first_name')"
                   :disabled="loading || savingProfile"
                 />
               </VCol>
@@ -184,7 +185,7 @@ onMounted(() => {
               <VCol cols="12" md="6">
                 <AppTextField
                   v-model="profileForm.last_name"
-                  label="Last name"
+                  :label="t('profile.last_name')"
                   :disabled="loading || savingProfile"
                 />
               </VCol>
@@ -192,7 +193,7 @@ onMounted(() => {
               <VCol cols="12" md="6">
                 <AppTextField
                   v-model="profileForm.username"
-                  label="Username"
+                  :label="t('profile.username')"
                   :readonly="!isAdmin"
                   :disabled="loading || savingProfile"
                 />
@@ -201,7 +202,7 @@ onMounted(() => {
               <VCol cols="12" md="6">
                 <AppTextField
                   v-model="profileForm.email"
-                  label="Email"
+                  :label="t('profile.email')"
                   type="email"
                   :readonly="!isAdmin"
                   :disabled="loading || savingProfile"
@@ -214,7 +215,7 @@ onMounted(() => {
                   :loading="savingProfile"
                   :disabled="loading"
                 >
-                  Save profile
+                  {{ t('profile.save_profile') }}
                 </VBtn>
               </VCol>
             </VRow>
@@ -224,14 +225,14 @@ onMounted(() => {
     </VCol>
 
     <VCol cols="12" md="5">
-      <VCard title="Change password">
+      <VCard :title="t('profile.change_password')">
         <VCardText>
           <VForm @submit.prevent="changePassword">
             <VRow>
               <VCol cols="12">
                 <AppTextField
                   v-model="passwordForm.old_password"
-                  label="Old password"
+                  :label="t('profile.old_password')"
                   type="password"
                   :disabled="savingPassword"
                 />
@@ -240,7 +241,7 @@ onMounted(() => {
               <VCol cols="12">
                 <AppTextField
                   v-model="passwordForm.new_password"
-                  label="New password"
+                  :label="t('profile.new_password')"
                   type="password"
                   :disabled="savingPassword"
                 />
@@ -249,7 +250,7 @@ onMounted(() => {
               <VCol cols="12">
                 <AppTextField
                   v-model="passwordForm.new_password_confirm"
-                  label="Confirm new password"
+                  :label="t('profile.confirm_new_password')"
                   type="password"
                   :disabled="savingPassword"
                 />
@@ -260,7 +261,7 @@ onMounted(() => {
                   type="submit"
                   :loading="savingPassword"
                 >
-                  Update password
+                  {{ t('profile.update_password') }}
                 </VBtn>
               </VCol>
             </VRow>

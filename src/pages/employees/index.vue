@@ -127,13 +127,8 @@ onMounted(() => {
         <VRow class="px-4 py-4">
             <VCol>
                 <p class="text-22 font-roboto">
-                    <VIcon size="22" icon="tabler-user" /> {{ $t('settingsModule.control') }}
+                    <VIcon size="22" icon="tabler-user" /> {{ $t('settings') }}
                 </p>
-            </VCol>
-            <VCol class="d-flex justify-end">
-                <VBtn color="primary" @click="isAddNewUserDrawerVisible = true">
-                    <VIcon size="22" icon="tabler-plus" />{{ $t('settingsModule.add') }}
-                </VBtn>
             </VCol>
 
         </VRow>
@@ -215,7 +210,10 @@ onMounted(() => {
             <template #bottom>
 
                 <VCardText class="pt-2">
-                    <div class="d-flex justify-end">
+                    <div class="d-flex align-center justify-space-between">
+                        <VBtn color="primary" @click="isAddNewUserDrawerVisible = true">
+                            <VIcon size="22" icon="tabler-plus" class="me-1" />{{ $t('settingsModule.add') }}
+                        </VBtn>
                         <VPagination v-if="store.users?.data" v-model="options.page"
                             :total-visible="$vuetify.display.smAndDown ? 3 : 5"
                             :length="Math.ceil(store.users?.pagination?.total / options.itemsPerPage)"

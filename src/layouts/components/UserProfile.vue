@@ -1,5 +1,6 @@
 <script setup>
 import avatar1 from '@images/avatars/avatar-1.png'
+const { t } = useI18n()
 
 const userCookie = useCookie('userData')
 const profile = ref(userCookie.value || {})
@@ -74,7 +75,7 @@ const logout = () => {
               <VIcon class="me-2" icon="tabler-user" size="22" />
             </template>
 
-            <VListItemTitle>Profile</VListItemTitle>
+            <VListItemTitle>{{ t('profile_menu.profile') }}</VListItemTitle>
           </VListItem>
 
           <!-- Divider -->
@@ -86,7 +87,7 @@ const logout = () => {
               <VIcon class="me-2" icon="tabler-logout" size="22" />
             </template>
 
-            <VListItemTitle @click="logout">Logout</VListItemTitle>
+            <VListItemTitle @click="logout">{{ t('profile_menu.logout') }}</VListItemTitle>
           </VListItem>
         </VList>
       </VMenu>
