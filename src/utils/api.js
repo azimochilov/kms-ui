@@ -20,4 +20,18 @@ export const $api = ofetch.create({
       }
     }
   },
+  async onResponseError({ response }) {
+    const statusCode = response?.status ?? response?._data?.status_code
+    const detailMessage = response?._data?.error?.detail ?? response?._data?.detail ?? ''
+    const isExpiredToken = String(detailMessage).toLowerCase().includes('expired token')
+
+    if (statusCode === 401 || isExpiredToken) {
+      useCookie('userAbilityRules').value = null
+      useCookie('userData').value = null
+      useCookie('accessToken').value = null
+
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login')
+        window.location.replace('/login')
+    }
+  },
 })

@@ -22,16 +22,20 @@
     "emai_address": "Адрес электронной почты",
     "user_type": "Тип пользователя",
     "branch": "Филиал",
+    "status": "Статус",
     "activity": "Активность",
     "send": "Отправить",
     "edit": "Редактировать",
     "change": "Изменять",
     "user_deleted": "Пользователь успешно удален.",
+    "client_deleted": "Клиент успешно удален.",
+    "active": "Активный",
+    "inactive": "Неактивный",
+    "device_deleted": "Устройство успешно удалено.",
     "seria_number": "Seriya raqami",
     "is_used": "Xolat",
     "used": "Foydalanilgan",
     "not_used": "Foydalanilmagan"
-
   },
   "login": {
     "welcome_kms": "Добро пожаловать в KMS!",
@@ -139,5 +143,42 @@
     "enter_seria": "Введите хотя бы один серийный номер",
     "token_deleted": "Токен успешно удалён"
   },
-  "cancel": "Отмена"
+  "logs": {
+    "title": "Логи",
+    "username": "Пользователь",
+    "action": "Действие",
+    "comment": "Комментарий",
+    "context": "Контекст",
+    "ip_address": "IP адрес",
+    "created_at": "Дата",
+    "date_from": "Дата с",
+    "date_to": "Дата по",
+    "clear": "Сбросить",
+    "admin_only": "Логи доступны только администраторам"
+  },
+  "cancel": "Отмена",
+  "profile": {
+    "title": "Профиль",
+    "change_photo": "Изменить фото",
+    "first_name": "Имя",
+    "last_name": "Фамилия",
+    "username": "Имя пользователя",
+    "email": "Email",
+    "save_profile": "Сохранить профиль",
+    "change_password": "Изменить пароль",
+    "old_password": "Старый пароль",
+    "new_password": "Новый пароль",
+    "confirm_new_password": "Подтвердите новый пароль",
+    "update_password": "Обновить пароль",
+    "updated": "Профиль обновлен",
+    "password_updated": "Пароль обновлен",
+    "password_mismatch": "Новые пароли не совпадают",
+    "failed_load": "Не удалось загрузить профиль",
+    "failed_update": "Не удалось обновить профиль",
+    "failed_change_password": "Не удалось изменить пароль"
+  },
+  "profile_menu": {
+    "profile": "Профиль",
+    "logout": "Выйти"
+  }
 }

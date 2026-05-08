@@ -49,6 +49,7 @@ declare module 'vue-router/auto/routes' {
     'employees-edit-password': RouteRecordInfo<'employees-edit-password', '/employees/editPassword', Record<never, never>, Record<never, never>>,
     'faq': RouteRecordInfo<'faq', '/faq', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,
+    'logs': RouteRecordInfo<'logs', '/logs', Record<never, never>, Record<never, never>>,
     'not-authorized': RouteRecordInfo<'not-authorized', '/not-authorized', Record<never, never>, Record<never, never>>,
     'profile': RouteRecordInfo<'profile', '/profile', Record<never, never>, Record<never, never>>,
     'requests': RouteRecordInfo<'requests', '/requests', Record<never, never>, Record<never, never>>,
