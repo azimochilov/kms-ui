@@ -143,6 +143,19 @@
     "enter_seria": "Kamida bitta seriya raqami kiriting",
     "token_deleted": "Token muvaffaqiyatli o'chirildi"
   },
+  "logs": {
+    "title": "Loglar",
+    "username": "Foydalanuvchi",
+    "action": "Amal",
+    "comment": "Izoh",
+    "context": "Kontekst",
+    "ip_address": "IP manzil",
+    "created_at": "Sana",
+    "date_from": "Sana dan",
+    "date_to": "Sana gacha",
+    "clear": "Tozalash",
+    "admin_only": "Loglar faqat administrator uchun mavjud"
+  },
   "cancel": "Bekor qilish",
   "profile": {
     "title": "Profil",
