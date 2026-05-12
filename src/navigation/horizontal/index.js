@@ -60,6 +60,13 @@ export default [
     subject: 'AclDemo',
   },
   {
+    title: 'reports.title',
+    to: { name: 'reports' },
+    icon: { icon: 'tabler-chart-bar' },
+    action: 'read',
+    subject: 'AclDemo',
+  },
+  {
     title: 'logs.title',
     to: { name: 'logs' },
     icon: { icon: 'tabler-file-text' },

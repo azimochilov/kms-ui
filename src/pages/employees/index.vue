@@ -44,11 +44,19 @@ const deleteItemConfirm = () => {
 }
 
 
-const options = ref({ page: 1, itemsPerPage: 12, sortBy: [''], sortDesc: [false] })
+const options = ref({ page: 1, itemsPerPage: 10, sortBy: [''], sortDesc: [false] })
 const isAddNewUserDrawerVisible = ref(false)
 const load = ref(true)
 const store = useUsers()
 const updateDataId = ref(null)
+const filters = ref({
+    search: '',
+    status: null,
+})
+const statusOptions = computed(() => [
+    { value: 1, title: t('settingsModule.active') },
+    { value: 0, title: t('settingsModule.inactive') },
+])
 // headers
 const headers = [
     { title: '№', key: 'id' },
@@ -91,12 +99,19 @@ const getUserId = (tableItem) => {
 }
 
 const refresh = () => {
-    store.fetchUsers(options.value.itemsPerPage, options.value.page)
+    load.value = true
+    store.fetchUsers(options.value.itemsPerPage, options.value.page, filters.value)
         .then(() => {
             load.value = false
         }).catch(error => {
             load.value = false
         })
+}
+
+const onItemsPerPageChange = value => {
+    const parsed = Number.parseInt(value, 10)
+    if (!Number.isNaN(parsed) && parsed > 0)
+        options.value.itemsPerPage = parsed
 }
 
 
@@ -120,6 +135,27 @@ onMounted(() => {
     refresh()
 
 })
+
+let searchDebounceTimer = null
+watch(() => filters.value.search, () => {
+    if (searchDebounceTimer)
+        clearTimeout(searchDebounceTimer)
+
+    searchDebounceTimer = setTimeout(() => {
+        options.value.page = 1
+        refresh()
+    }, 350)
+})
+
+watch(() => filters.value.status, () => {
+    options.value.page = 1
+    refresh()
+})
+
+watch(() => options.value.itemsPerPage, () => {
+    options.value.page = 1
+    refresh()
+})
 </script>
 
 <template>
@@ -127,10 +163,28 @@ onMounted(() => {
         <VRow class="px-4 py-4">
             <VCol>
                 <p class="text-22 font-roboto">
-                    <VIcon size="22" icon="tabler-user" /> {{ $t('settings') }}
+                    <VIcon size="22" icon="tabler-users" /> {{ $t('settings') }}
                 </p>
             </VCol>
-
+            <VCol class="d-flex justify-end">
+                <VCol cols="12" sm="6">
+                    <AppTextField v-model="filters.search" :placeholder="$t('search')" density="compact"
+                        prepend-inner-icon="tabler-search" />
+                </VCol>
+                <VCol cols="12" sm="4">
+                    <AppSelect v-model="filters.status" :placeholder="$t('select_status')" :items="statusOptions"
+                        item-title="title" item-value="value" clearable clear-icon="tabler-x" />
+                </VCol>
+                <VCol col="12">
+                    <AppSelect :model-value="options.itemsPerPage" :items="[
+                        { value: 10, title: '10' },
+                        { value: 25, title: '25' },
+                        { value: 50, title: '50' },
+                        { value: 100, title: '100' },
+                    ]" item-title="title" item-value="value" style="inline-size: 6.25rem;"
+                        @update:model-value="onItemsPerPageChange" />
+                </VCol>
+            </VCol>
         </VRow>
 
         <VDataTable :headers="headers" :items="store.users?.data || []" :loading="load">
@@ -209,7 +263,7 @@ onMounted(() => {
             <!-- bottom pagination  -->
             <template #bottom>
 
-                <VCardText class="pt-2">
+                <VCardText class="pt-3">
                     <div class="d-flex align-center justify-space-between">
                         <VBtn color="primary" @click="isAddNewUserDrawerVisible = true">
                             <VIcon size="22" icon="tabler-plus" class="me-1" />{{ $t('settingsModule.add') }}
@@ -217,7 +271,7 @@ onMounted(() => {
                         <VPagination v-if="store.users?.data" v-model="options.page"
                             :total-visible="$vuetify.display.smAndDown ? 3 : 5"
                             :length="Math.ceil(store.users?.pagination?.total / options.itemsPerPage)"
-                            @click="refresh" />
+                            @update:model-value="refresh" />
                     </div>
                 </VCardText>
 
@@ -239,7 +293,7 @@ onMounted(() => {
 </template>
 
 
-<style scom>
+<style scoped>
 .v-data-table thead th {
     background-color: #f3f2f3;
     border-spacing: 0;
