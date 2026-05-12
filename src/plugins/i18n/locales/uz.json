@@ -156,6 +156,61 @@
     "clear": "Tozalash",
     "admin_only": "Loglar faqat administrator uchun mavjud"
   },
+  "reports": {
+    "title": "Hisobotlar",
+    "filters": {
+      "from": "Boshlanish sanasi",
+      "to": "Tugash sanasi",
+      "branch": "Filial",
+      "all_branches": "Barcha filiallar"
+    },
+    "actions": {
+      "generate": "Hisobotni ko'rsatish",
+      "refresh": "Yangilash",
+      "export_pdf": "PDF eksport",
+      "export_excel": "Excel eksport",
+      "export_cb": "MB uchun eksport",
+      "export_users": "Foydalanuvchilar reestri (PDF)",
+      "export_lost_tokens": "Bekor qilingan tokenlar reestri (PDF)"
+    },
+    "messages": {
+      "download_started": "Fayl yuklash boshlandi"
+    },
+    "hints": {
+      "summary_intro": "Avval davr va filialni tanlang, keyin hisobotni shakllantiring. Eksport ma'lumot chiqqandan keyin faol bo'ladi.",
+      "current_scope": "Davr: {from} - {to} | Filial: {branch}",
+      "empty_summary": "\"Hisobotni ko'rsatish\" tugmasini bosing yoki davr va filialni o'zgartirib qayta urinib ko'ring.",
+      "cb_intro": "Tokenlar bo'yicha nazorat ko'rsatkichlari va MB uchun eksport.",
+      "registry_intro": "Foydalanuvchilar va bekor qilingan tokenlar bo'yicha alohida reestrlar."
+    },
+    "errors": {
+      "default": "Hisobot ma'lumotlarini olishda xatolik",
+      "select_dates": "Boshlanish va tugash sanalarini tanlang",
+      "invalid_range": "Tugash sanasi boshlanish sanasidan oldin bo'lmasligi kerak"
+    },
+    "table": {
+      "branch": "Filial",
+      "total": "Jami",
+      "active": "Faol",
+      "revoked": "Bekor qilingan",
+      "imported": "Import qilingan",
+      "updated": "Yangilangan",
+      "clients": "Mijozlar"
+    },
+    "cb": {
+      "title": "Markaziy bank metrikalari",
+      "total": "Jami tokenlar",
+      "assigned": "Taqsimlangan",
+      "unassigned": "Taqsimlanmagan",
+      "attached": "Biriktirilgan",
+      "detached": "Biriktirilmagan",
+      "used": "Ishlatilgan",
+      "active_tokens": "Faol tokenlar"
+    },
+    "registry": {
+      "title": "Reestrlar"
+    }
+  },
   "cancel": "Bekor qilish",
   "profile": {
     "title": "Profil",

@@ -138,7 +138,7 @@ export const useUsers = defineStore("users", {
         },
 
         // get users
-        async fetchUsers(per_page, page) {
+        async fetchUsers(per_page, page, filters = {}) {
             const query = {}
             if (per_page && per_page > 0) {
                 query.page_size = per_page
@@ -146,6 +146,12 @@ export const useUsers = defineStore("users", {
             }
             if (page)
                 query.page = page
+            const search = String(filters?.search ?? '').trim()
+            if (search)
+                query.search = search
+            const statusValue = filters?.status
+            if (statusValue !== null && statusValue !== undefined && statusValue !== '')
+                query.status = Number(statusValue)
 
             const res = await this.fetchFromAvailableEndpoints(query)
             this.normalizeListResponse(res)
