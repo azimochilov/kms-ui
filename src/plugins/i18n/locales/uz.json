@@ -259,5 +259,55 @@
   "profile_menu": {
     "profile": "Profil",
     "logout": "Chiqish"
+  },
+  "dashboard": {
+    "title": "Asosiy panel",
+    "refresh": "Yangilash",
+    "chart": {
+      "title": "Sertifikatlar soni (so'rov turi bo'yicha)",
+      "total": "Jami",
+      "series_name": "Sertifikatlar",
+      "count_unit": "ta",
+      "load_error": "Grafik ma'lumotini yuklab bo'lmadi",
+      "internet_bank": "Internet Bank",
+      "mobile_bank": "Mobile Bank",
+      "iabs": "iABS",
+      "other": "Boshqa"
+    },
+    "kpi": {
+      "total": "Jami",
+      "active": "Faol",
+      "revoked": "Bekor qilingan",
+      "updated": "Yangilangan",
+      "imported": "Import qilingan",
+      "mix_title": "Sertifikat holatlari ulushi",
+      "load_error": "Sertifikat statistikasi yuklanmadi"
+    },
+    "expiring": {
+      "title": "Muddati tugayotgan sertifikatlar",
+      "series_name": "Sertifikatlar",
+      "in_7_days": "7 kun ichida",
+      "in_30_days": "30 kun ichida",
+      "in_60_days": "60 kun ichida",
+      "urgent_count": "Shoshilinch: {count}",
+      "urgent_title": "Muddati eng yaqin tugaydigan sertifikatlar",
+      "urgent_subtitle": "Muddati eng yaqin tugaydigan sertifikatlar",
+      "days_left_label": "{count} kun qoldi",
+      "load_error": "Muddati tugash statistikasi yuklanmadi",
+      "columns": {
+        "cert_sn": "Sertifikat raqami",
+        "cert_to": "Amal qilish muddati",
+        "days_left": "Qolgan kun"
+      }
+    },
+    "tokens": {
+      "title": "Tokenlar statistikasi",
+      "total": "Jami tokenlar",
+      "assigned": "Biriktirilgan",
+      "unassigned": "Biriktirilmagan",
+      "active": "Faol",
+      "inactive": "Nofaol",
+      "load_error": "Token statistikasi yuklanmadi"
+    }
   }
 }

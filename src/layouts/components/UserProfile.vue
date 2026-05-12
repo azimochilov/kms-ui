@@ -78,6 +78,14 @@ const logout = () => {
             <VListItemTitle>{{ t('profile_menu.profile') }}</VListItemTitle>
           </VListItem>
 
+          <VListItem to="/faq">
+            <template #prepend>
+              <VIcon class="me-2" icon="tabler-help" size="22" />
+            </template>
+
+            <VListItemTitle>FAQ</VListItemTitle>
+          </VListItem>
+
           <!-- Divider -->
           <VDivider class="my-2" />
 
