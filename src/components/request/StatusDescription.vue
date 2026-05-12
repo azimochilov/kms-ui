@@ -137,7 +137,7 @@ const handleDrawerModelValueUpdate = val => {
 
 
                             <VCol cols="12">
-                                <AppSelect :items="[{ value: '1', label: 'label' }]" v-model="statusData.cng"
+                                <AppSelect :items="[{ value: '1', label: 'Styx Software Key storage provider' }]" v-model="statusData.cng"
                                     item-value="value" item-title="label" :rules="[requiredValidator]" />
                             </VCol>
 

@@ -245,38 +245,39 @@ const statuFilterData = ref([
 
 
                             <!-- actions ustunini alohida chiqarish -->
-                            <template v-if="column.key === 'actions'">
-                                <div class=" d-flex justify-center">
-                                    <VBtn icon variant="text" size="small" color="medium-emphasis">
-                                        <VIcon size="24" icon="tabler-dots-vertical" />
-                                        <VMenu activator="parent">
-                                            <VList>
-                                                <VListItem link @click="statusCreate('confirmation', item.id)">
-                                                    <template #prepend>
-                                                        <VIcon icon="tabler-circle-check" color="#28C76F" />
-                                                    </template>
-                                                    <VListItemTitle>Tasdiqlash</VListItemTitle>
-                                                </VListItem>
+                          <!-- actions template ni shu ko'rinishga o'zgartiring -->
+                          <template v-if="column.key === 'actions'">
+                              <div class="d-flex justify-center">
+                                <VBtn icon variant="text" size="small" color="medium-emphasis"
+                                      :disabled="item.status !== 0">
+                                  <VIcon size="24" icon="tabler-dots-vertical" />
+                                  <VMenu activator="parent" v-if="item.status === 0">
+                                    <VList>
+                                      <VListItem link @click="statusCreate('confirmation', item.id)">
+                                        <template #prepend>
+                                          <VIcon icon="tabler-circle-check" color="#28C76F" />
+                                        </template>
+                                        <VListItemTitle>Tasdiqlash</VListItemTitle>
+                                      </VListItem>
 
-                                                <VListItem @click="statusCreate('rejection', item.id)">
-                                                    <template #prepend>
-                                                        <VIcon icon="tabler-circle-x" color="#FF4C51" />
-                                                    </template>
-                                                    <VListItemTitle>Rad etish</VListItemTitle>
-                                                </VListItem>
+                                      <VListItem @click="statusCreate('rejection', item.id)">
+                                        <template #prepend>
+                                          <VIcon icon="tabler-circle-x" color="#FF4C51" />
+                                        </template>
+                                        <VListItemTitle>Rad etish</VListItemTitle>
+                                      </VListItem>
 
-                                                <!-- delete -->
-                                                <VListItem @click="deleteUser(item.id)">
-                                                    <template #prepend>
-                                                        <VIcon icon="tabler-trash" color="#FF4C51" />
-                                                    </template>
-                                                    <VListItemTitle>Delete</VListItemTitle>
-                                                </VListItem>
-                                            </VList>
-                                        </VMenu>
-                                    </VBtn>
-                                </div>
-                            </template>
+                                      <VListItem @click="deleteUser(item.id)">
+                                        <template #prepend>
+                                          <VIcon icon="tabler-trash" color="#FF4C51" />
+                                        </template>
+                                        <VListItemTitle>Delete</VListItemTitle>
+                                      </VListItem>
+                                    </VList>
+                                  </VMenu>
+                                </VBtn>
+                              </div>
+                          </template>
                             <template v-else-if="column.key == 'type'">
                                 {{ typeDevice(item.type) }}
 
