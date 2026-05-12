@@ -73,11 +73,4 @@ export default [
     action: 'read',
     subject: 'AclDemo',
   },
-  {
-    title: 'FAQ',
-    to: { name: 'faq' },
-    icon: { icon: 'tabler-help' },
-    action: 'read',
-    subject: 'AclDemo',
-  },
 ]
