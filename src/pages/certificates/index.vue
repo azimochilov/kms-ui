@@ -166,13 +166,16 @@ const downloadPDF = (data) => {
 
 
 const statusText = (status) => {
-    if (status == 3 || status === 'active') {
-        return { class: "active", text: 'faol' }
-    } else if (status == 2 || status === 'updated') {
-        return { class: "history", text: 'yangilangan' }
-    }
-    else if (status == 1 || status === 'revoked') {
-        return { class: "error", text: 'o\'chirilgan' }
+    if (status == 4 || status === 'active') {
+        return { class: "active", text: 'O\'rnatilgan' }
+    } else if (status == 3 || status === 'updated') {
+        return { class: "history", text: 'Yangilangan' }
+    } else if (status == 2 || status === 'in_proccess') {
+        return { class: "active", text: 'PFX yuklab olish uchun tayyor' }
+    } else if (status == 1 || status === 'in_proccess') {
+        return { class: "active", text: 'Tokenga yozish uchun tayyor' }
+    } else if (status == 0 || status === 'revoked') {
+        return { class: "error", text: 'Bekor qilingan' }
     }
     return { class: "", text: String(status ?? '-') }
 }
@@ -265,7 +268,7 @@ const statusText = (status) => {
 
         </VRow>
         <VDataTable :headers="headers" :items="store.certificates?.data || []" :loading="load" :hover="true"
-            loading-text="yuklanmoqda" :items-per-page="options.itemsPerPage">
+            loading-text="Yuklanmoqda" :items-per-page="options.itemsPerPage">
             <template #item="{ item, columns }">
                 <tr :class="getRowProps(item)">
                     <td v-for="column in columns" :key="column.key">
@@ -277,9 +280,15 @@ const statusText = (status) => {
                             <template v-if="column.key === 'actions'">
                                 <div class="py-2">
                                     <VListItemTitle class=" cursor-pointer text-cancel " @click="deleteItem(item.id)"
-                                        v-if="item.status == 3">
+                                        v-if="item.status != 0">
                                         Bekor
                                         qilish
+                                    </VListItemTitle>
+                                  <hr>
+
+                                    <VListItemTitle class=" cursor-pointer text-cancel " @click="updateItem(item.id)"
+                                        v-if="item.status != 0 && item.status != 3">
+                                        Yangilash
                                     </VListItemTitle>
                                     <span v-else class="">Bekor qilingan</span>
                                 </div>
@@ -292,7 +301,7 @@ const statusText = (status) => {
                             </template>
                             <template v-else-if="column.key === 'pdf'">
                                 <VListItemTitle class=" cursor-pointer text-cancel " @click="downloadPDF(item)">
-                                    download
+                                    Yuklab olish
                                 </VListItemTitle>
 
 
