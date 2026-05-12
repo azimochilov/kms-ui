@@ -88,6 +88,23 @@
     "rejected": "Rad etilgan"
   },
   "certificates": {
+    "reissue": {
+      "title": "Sertifikatni yangilash",
+      "hint": "Yangilash uchun PDF fayl biriktiring. Fayl yuborilgach sertifikat yangilash jarayoni boshlanadi.",
+      "file_placeholder": "Faylni tanlash uchun bosing (.pdf)",
+      "file_required": "Iltimos, fayl tanlang",
+      "success": "Sertifikat muvaffaqiyatli yangilandi",
+      "error": "Yangilashda xatolik yuz berdi",
+      "cancel": "Orqaga",
+      "submit": "Yangilash"
+    },
+    "statuses": {
+      "installed": "O'rnatilgan",
+      "updated": "Yangilangan",
+      "pfx_ready": "PFX yuklab olish uchun tayyor",
+      "token_ready": "Tokenga yozish uchun tayyor",
+      "revoked": "Bekor qilingan"
+    },
     "title": "Sertifikatlar",
     "owner_name": "F.I.O egasi",
     "token_serial_number": "Token seriya raqami",
@@ -100,7 +117,14 @@
     "active": "Faol",
     "inactive": "Faol emas",
     "mobile": "Mobil",
-    "updated": "Yangilangan"
+    "updated": "Yangilangan",
+    "updating": "Sertifikat yangilandi",
+    "download": "Yuklab olish",
+    "actions": {
+      "revoke": "Bekor qilish",
+      "revoked": "Bekor qilingan",
+      "update": "Yangilash"
+    }
   },
   "tokenModule": {
     "title": "Tokenlar boshqaruvi",

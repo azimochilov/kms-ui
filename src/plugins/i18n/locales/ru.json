@@ -88,6 +88,23 @@
     "rejected": "Отклонённый"
   },
   "certificates": {
+    "reissue": {
+      "title": "Обновление сертификата",
+      "hint": "Прикрепите PDF файл для обновления. После отправки файла начнётся процесс обновления сертификата.",
+      "file_placeholder": "Нажмите для выбора файла (.pdf)",
+      "file_required": "Пожалуйста, выберите файл",
+      "success": "Сертификат успешно обновлён",
+      "error": "Ошибка при обновлении",
+      "cancel": "Назад",
+      "submit": "Обновить"
+    },
+    "statuses": {
+      "installed": "Установлен",
+      "updated": "Обновлён",
+      "pfx_ready": "Готов к скачиванию PFX",
+      "token_ready": "Готов к записи на токен",
+      "revoked": "Отозван"
+    },
     "title": "Сертификати",
     "owner_name": "Ф.И.О владельца",
     "token_serial_number": "Серийный номер токена",
@@ -100,7 +117,14 @@
     "active": "Faol",
     "inactive": "Faol emas",
     "mobile": "Mobil",
-    "updated": "Yangilangan"
+    "updated": "Yangilangan",
+    "updating": "Сертификат обновлен",
+    "download": "Скачать",
+    "actions": {
+      "revoke": "Отозвать",
+      "revoked": "Отозван",
+      "update": "Обновить"
+    }
   },
   "tokenModule": {
     "title": "Управление токенами",
