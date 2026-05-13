@@ -296,7 +296,6 @@ async function fetchCertificatesCountByType() {
 
   const endpoints = [
     'requests/certificates/count-by-type/',
-    'requests/requests/count-by-type/',
   ]
 
   let lastError = null
