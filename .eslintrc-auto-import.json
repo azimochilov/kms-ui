@@ -360,6 +360,7 @@
     "useTemplateRef": true,
     "useAbility": true,
     "maxLengthValidator": true,
-    "minLengthValidator": true
+    "minLengthValidator": true,
+    "useTokenSN": true
   }
 }

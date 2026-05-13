@@ -128,7 +128,11 @@ onMounted(() => {
             </VCol>
             <VCol class="d-flex justify-end">
 
-
+                <!-- Orqaga button -->
+                <VBtn variant="outlined" class="mr-3" @click="$router.back()">
+                    <VIcon size="18" icon="tabler-arrow-left" class="mr-1" />
+                    {{ $t('back') }}
+                </VBtn>
 
 
                 <!-- <AddNewUserDrawer v-model:isDrawerOpen="isAddNewUserDrawerVisible" v-model:update_dataId="updateDataId"

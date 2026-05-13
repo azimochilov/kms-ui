@@ -1,11 +1,215 @@
 <script setup>
 import { useClient } from '@/@core/stores/client'
+import { useToast } from '@/@core/stores/toastConfig'
+import { useTokenSN } from '@/@core/composable/useTokenSN'
+import { useI18n } from 'vue-i18n'
 import { VForm } from 'vuetify/components/VForm'
+import { $api } from "@/utils/api";
+import PhoneInput from '@/components/clients/PhoneInput.vue'
 
+const { t } = useI18n()
 const store = useClient()
-
+const storetoast = useToast()
 const operators = ref([])
+const refForm = ref()
+const serverErrors = ref({})
 
+// --- 1. clientData ---
+const clientData = ref({
+    operator: null,
+    cert_type: null,
+    type_client: null,
+    local_code: '',
+    cname: '',
+    sname: '',
+    fido_user_id: '',
+    location: '',
+    state: '',
+    country: 'UZ',
+    address: '',
+    email: '',
+    organisation: '',
+    phone: '',
+    org_unit: '',
+    inn: '',
+    pinfl: '',
+    token_type: null,
+    token_sn: '',
+    csr: '',
+    container: '',
+    file_upload: null,
+})
+
+// --- 2. composable ---
+const { getTokenSN, loading: tokenLoading } = useTokenSN(clientData)
+
+// --- visibility ---
+const showSname       = ref(true)
+const showInn         = ref(false)
+const showPinfl       = ref(false)
+const showTokenFields = ref(true)
+const showTypeClient  = ref(true)
+
+const updateVisibility = () => {
+    const ct = Number(clientData.value.cert_type)
+    const tc = Number(clientData.value.type_client)
+    const tt = clientData.value.token_type
+
+    const isMobile = [2, 3, 4, 7].includes(ct)
+    const isIABS   = ct === 1
+
+    showTokenFields.value = !isMobile && tt !== 'virtual'
+    showTypeClient.value  = !isIABS
+
+    if (isMobile) {
+        showInn.value   = false
+        showPinfl.value = false
+    } else if (isIABS) {
+        showInn.value   = false
+        showPinfl.value = true
+    } else {
+        showInn.value   = tc === 1
+        showPinfl.value = tc === 2
+    }
+}
+
+// --- fetchClientInfo ---
+const fetchClientInfo = async () => {
+    const fidoId  = clientData.value.fido_user_id
+    const certType = clientData.value.cert_type
+    if (!fidoId || !certType) return
+
+    try {
+        const res = await $api(`clients/${fidoId}/info/${certType}/iabs`)
+
+        const isMobile = [2, 3, 4, 7].includes(Number(certType))
+        const isIABS   = Number(certType) === 1
+
+        const clean = str => str ? str.replace(/[^a-zA-Z0-9 а-яА-ЯЁё]/g, '').trim() : ''
+
+        if (isMobile && res?.data?.user) {
+            const u = res.data.user
+            clientData.value.cname        = u.fio     ?? clientData.value.cname
+            clientData.value.location     = u.city    ?? clientData.value.location
+            clientData.value.state        = u.region  ?? clientData.value.state
+            clientData.value.country      = u.country ?? clientData.value.country
+            clientData.value.address      = u.address ?? clientData.value.address
+            clientData.value.inn          = u.inn     ?? clientData.value.inn
+            clientData.value.pinfl        = u.pinfl   ?? clientData.value.pinfl
+            clientData.value.phone        = u.phone   ?? clientData.value.phone
+        } else {
+            if (res?.userName)     clientData.value.cname        = clean(res.userName)
+            if (res?.directorName) clientData.value.sname        = clean(res.directorName)
+            if (res?.location)     clientData.value.location     = clean(res.location)
+            if (res?.region)       clientData.value.state        = clean(res.region)
+            if (res?.address)      clientData.value.address      = clean(res.address)
+            if (res?.company)      clientData.value.organisation = clean(res.company)
+            if (res?.country)      clientData.value.country      = res.country
+            if (res?.inn)          clientData.value.inn          = res.inn
+            if (res?.pinfl)        clientData.value.pinfl        = res.pinfl
+            if (res?.mobilePhone)  clientData.value.phone        = res.mobilePhone
+            if (res?.localCode)    clientData.value.local_code   = res.localCode
+
+            if ([3, 2].includes(Number(certType))) {
+                if (res?.login)        clientData.value.cname = clean(res.login)
+                if (res?.directorName) clientData.value.sname = clean(res.directorName)
+            }
+
+            if (isIABS) {
+                if (res?.userName) clientData.value.cname = clean(res.userName)
+                if (res?.description) {
+                    const arr = res.description.split(',')
+                    clientData.value.org_unit     = clean((arr[0] ?? '').replace('Департамент:', ''))
+                    clientData.value.organisation = clean((arr[1] ?? '').replace('Должность:', ''))
+                }
+            }
+        }
+
+        // org_unit prefix
+        const ouMap = {
+            2: 'UZC003',
+            1: 'UZB003',
+            3: 'UZC003',
+            4: 'UZC003',
+            7: 'UZM003',
+            5: 'UZJ003',
+            6: 'UZS003',
+        }
+        const prefix = ouMap[Number(certType)] ?? ''
+        if (prefix && fidoId) {
+            clientData.value.org_unit = prefix + String(fidoId).padStart(9, '0')
+        }
+
+    } catch (err) {
+        console.error('fetchClientInfo error:', err)
+    }
+}
+
+// --- watchers ---
+let infoDebounce = null
+
+watch(() => clientData.value.fido_user_id, () => {
+    if (infoDebounce) clearTimeout(infoDebounce)
+    infoDebounce = setTimeout(() => fetchClientInfo(), 500)
+})
+
+watch(() => clientData.value.cert_type, () => {
+    fetchClientInfo()
+    updateVisibility()
+})
+
+watch(() => clientData.value.type_client, () => updateVisibility())
+watch(() => clientData.value.token_type,  () => updateVisibility())
+
+watch(clientData, (newVal, oldVal) => {
+    Object.keys(serverErrors.value).forEach(field => {
+        if (newVal[field] !== oldVal[field])
+            serverErrors.value[field] = undefined
+    })
+}, { deep: true })
+
+// --- validation rules ---
+const isInnRequired   = computed(() => Number(clientData.value.type_client) === 1)
+const isPinflRequired = computed(() => {
+    const tc = Number(clientData.value.type_client)
+    const ct = Number(clientData.value.cert_type)
+    return tc === 2 || ct === 1
+})
+
+const innRule   = v => !isInnRequired.value   || String(v ?? '').trim().length > 0 || 'INN majburiy'
+const pinflRule = v => !isPinflRequired.value || String(v ?? '').trim().length > 0 || 'PINFL majburiy'
+
+// --- token SN ---
+const handleGetTokenSN = async () => {
+    try {
+        await getTokenSN(clientData.value.token_type || 'ePass/iKey')
+        storetoast.successToast(t('clients.token_sn_received'))
+    } catch (err) {
+        if (err?.type === 'check_cert') {
+            for (const sn of err.certSnArr) {
+                try {
+                    const res = await $api('certificates/check/', {
+                        method: 'POST',
+                        body: { cert_sn: sn },
+                    })
+                    if (res?.[0]?.status === 1) {
+                        storetoast.errorToast(t('clients.cert_must_be_revoked'))
+                        return
+                    }
+                } catch {}
+            }
+            await handleGetTokenSN()
+        } else if (err?.message === 'fill_fields') {
+            storetoast.errorToast(t('clients.fill_required_fields'))
+        } else if (err?.message === 'ws_error') {
+            storetoast.errorToast(t('clients.ws_connection_error'))
+        } else {
+            storetoast.errorToast(err?.message || t('error'))
+        }
+    }
+}
+
+// --- operators ---
 const loadOperators = async () => {
     try {
         const res = await $api('users/users/', { query: { page_size: 200 } })
@@ -23,115 +227,29 @@ const loadOperators = async () => {
                 value: u.id,
                 label: [u.first_name, u.last_name].filter(Boolean).join(' ').trim() || u.username,
             }))
-    }
-    catch {
+    } catch {
         operators.value = []
     }
 }
 
-onMounted(() => {
-    loadOperators()
-})
+onMounted(() => loadOperators())
 
 definePage({
-    meta: {
-        action: 'read',
-        subject: 'AclDemo',
-    }
-})
-const refForm = ref()
-
-const clientData = ref({
-    operator: null,
-    cert_type: null,       // typeCert → cert_type (integer)
-    type_client: null,     // typeClient → type_client
-    local_code: '',
-
-    cname: '',
-    sname: '',
-    fido_user_id: '',      // iabsID → fido_user_id
-    password: '',
-    location: '',
-    state: '',
-    country: 'UZ',
-    address: '',
-    email: '',
-    organisation: '',      // organization → organisation
-    phone: '',
-    org_unit: '',          // ou → org_unit
-    inn: '',
-    pinfl: '',
-
-    token_type: null,
-    token_sn: '',          // token_serialnumber → token_sn
-    csr: '',
-    container: '',
-    file_upload: null,     // fileToUpload → file_upload
+    meta: { action: 'read', subject: 'AclDemo' }
 })
 
-const isInnRequired = computed(() => Number(clientData.value.type_client) === 1)
-const isPinflRequired = computed(() => {
-    const typeClient = Number(clientData.value.type_client)
-    const certType = Number(clientData.value.cert_type)
-    return typeClient === 2 || certType === 3
-})
-
-const innRule = value => {
-    if (!isInnRequired.value)
-        return true
-    return String(value ?? '').trim().length > 0 || 'INN is required for legal person'
-}
-
-const pinflRule = value => {
-    if (!isPinflRequired.value)
-        return true
-    return String(value ?? '').trim().length > 0 || 'PINFL is required for physical person or cert type 3'
-}
-
-
-
-
-// 'operator'          => ['nullable', 'string'],
-//   'typeCert'          => ['nullable', 'string'],
-//   'typeClient'        => ['nullable', 'string'],
-//   'cert_type'         => ['nullable', 'string'],
-//   'local_code'        => ['nullable', 'string'],
-
-//   'cname'             => ['required', 'string', 'max:100'],
-//   'sname'             => ['nullable', 'string', 'max:100'],
-//   'iabsID'            => ['required', 'string'],
-//   'password'          => ['required', 'string', 'min:8'],
-//   'location'          => ['required', 'string'],
-//   'state'             => ['required', 'string'],
-//   'country'           => ['required', 'string'],
-//   'address'           => ['required', 'string'],
-//   'email'             => ['required', 'email', 'unique:clients,email'],
-//   'organisation'      => ['required', 'string'],
-//   'phone'             => ['required', 'numeric', 'digits:12'],
-//   'ou'                => ['required', 'string'],
-//   'inn'               => ['nullable', 'string'],
-//   'pinfl'             => ['nullable', 'string'],
-
-//   'accname'           => ['nullable', 'string'],
-//   'job'               => ['nullable', 'string'],
-//   'token_type'        => ['nullable', 'string'],
-//   'token_sn'          => ['nullable', 'string'],
-//   'token_serialnumber'=> ['nullable', 'string'],
-//   'csr'               => ['nullable', 'string'],
-//   'container'         => ['nullable', 'string'],
-//   'fileToUpload'      => ['required', 'file', 'mimes:pdf', 'max:10240'],
-
-
+// --- submit ---
 const onSubmit = () => {
     refForm.value?.validate().then(({ valid }) => {
         if (!valid) return
+        serverErrors.value = {}
 
         const formData = new FormData()
         const d = clientData.value
 
         const fields = [
             'operator', 'cert_type', 'type_client', 'local_code',
-            'cname', 'sname', 'fido_user_id', 'password',
+            'cname', 'sname', 'fido_user_id',
             'location', 'state', 'country', 'address', 'email',
             'organisation', 'phone', 'org_unit', 'inn', 'pinfl',
             'token_type', 'token_sn', 'csr', 'container',
@@ -139,9 +257,8 @@ const onSubmit = () => {
 
         for (const key of fields) {
             const val = d[key]
-            if (val !== null && val !== undefined && val !== '') {
+            if (val !== null && val !== undefined && val !== '')
                 formData.append(key, val)
-            }
         }
 
         if (d.file_upload) {
@@ -150,214 +267,303 @@ const onSubmit = () => {
         }
 
         store.createClients(formData)
+            .then(res => {
+                if (res?.id || res?.success !== false) {
+                    storetoast.successToast(t('settingsModule.client_created'))
+                    $router.back()
+                }
+            })
+            .catch(err => {
+                const errors = err?.data?.error ?? err?.response?._data?.error ?? {}
+                if (typeof errors === 'object' && !Array.isArray(errors))
+                    serverErrors.value = errors
+                else
+                    storetoast.errorToast(String(errors) || t('error'))
+            })
     })
 }
 
-const token_type = [
-    { value: 'ePass/iKey', label: 'ePass/iKey' },
-    { value: 'virtual', label: 'Virtual token' },
-    { value: 'smartcard', label: 'BST' },]
 
+const token_type = computed(() => [
+    { value: 'ePass/iKey', label: t('clients.token_epass') },
+    { value: 'virtual',    label: t('clients.token_virtual') },
+    { value: 'smartcard',  label: t('clients.token_bst') },
+])
 
+const typeClient = computed(() => [
+    { value: 1, label: t('clients.legal_person') },
+    { value: 2, label: t('clients.physical_person') },
+])
 
-
-
-
-const typeClient = [
-    { value: 1, label: 'Юридическое лицо' },
-    { value: 2, label: 'Физическое лицо' },
-]
-
-
-const typeCert = [
-    { value: 2, label: 'Интернет банкинг' },
-    { value: 5, label: 'Мобильный банкинг Metin' },
-    { value: 4, label: 'Мобильный банкинг iABS' },
-    { value: 3, label: 'Мобильный банкинг PFX' },
-    { value: 1, label: 'Пользователь iABS' },
-]
-
+const typeCert = computed(() => [
+    { value: 2, label: t('clients.internet_banking') },
+    { value: 3, label: t('clients.mobile_banking_pfx') },
+    { value: 1, label: t('clients.iabs_user') },
+])
 
 </script>
 
 <template>
-
-    <VCard title="Add Client" class="py-6 px-6">
+    <VCard :title="$t('clients.add_client')" class="py-6 px-6">
         <VForm ref="refForm" @submit.prevent="onSubmit">
             <VRow>
 
-                <!-- fido_user_id (IABS ID)  -->
-                <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.fido_user_id" :rules="[requiredValidator]" label="IABS ID"
-                        :requireInput="true" />
-                </VCol>
-
-                <!-- password -->
+                <!-- IABS ID -->
                 <VCol cols="12" md="6">
                     <AppTextField
-                        v-model="clientData.password"
-                        label="Password"
-                        type="password"
+                        v-model="clientData.fido_user_id"
+                        type="number"
+                        :rules="[requiredValidator]"
+                        :label="$t('clients.iabs_id')"
                         :requireInput="true"
-                        :rules="[requiredValidator, minLengthValidator(clientData.password, 8)]"
+                        :error-messages="serverErrors.fido_user_id"
                     />
                 </VCol>
 
-                <!-- operator  -->
+                <!-- cert_type -->
                 <VCol cols="12" md="6">
-                    <AppSelect v-model="clientData.operator" label="Operator" :items="operators" item-title="label"
-                        item-value="value" />
-                </VCol>
-
-                <!-- cert_type  -->
-                <VCol cols="12" md="6">
-                    <AppSelect v-model="clientData.cert_type" label="typeCert" :items="typeCert" item-title="label"
-                        item-value="value" />
+                    <AppSelect
+                        v-model="clientData.cert_type"
+                        :label="$t('clients.cert_type')"
+                        :items="typeCert"
+                        item-title="label"
+                        item-value="value"
+                        :error-messages="serverErrors.cert_type"
+                    />
                 </VCol>
 
                 <!-- type_client -->
-                <VCol cols="12" md="6">
-                    <AppSelect v-model="clientData.type_client" label="typeClient" :items="typeClient" item-title="label"
-                        item-value="value" />
+                <VCol cols="12" md="6" v-if="showTypeClient">
+                    <AppSelect
+                        v-model="clientData.type_client"
+                        :label="$t('clients.client_type')"
+                        :items="typeClient"
+                        item-title="label"
+                        item-value="value"
+                        :error-messages="serverErrors.type_client"
+                    />
                 </VCol>
 
+                <!-- operator -->
+                <VCol cols="12" md="6">
+                    <AppSelect
+                        v-model="clientData.operator"
+                        :label="$t('clients.operator')"
+                        :items="operators"
+                        item-title="label"
+                        item-value="value"
+                        :error-messages="serverErrors.operator"
+                    />
+                </VCol>
 
                 <!-- cname -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.cname" :rules="[requiredValidator]" :requireInput="true"
-                        label="Cname" />
+                    <AppTextField
+                        v-model="clientData.cname"
+                        :rules="[requiredValidator]"
+                        :requireInput="true"
+                        :label="$t('clients.cname')"
+                        :error-messages="serverErrors.cname"
+                    />
                 </VCol>
 
-                <!-- city location  -->
+                <!-- sname -->
+                <VCol cols="12" md="6" v-if="showSname">
+                    <AppTextField
+                        v-model="clientData.sname"
+                        :label="$t('clients.sname')"
+                        :error-messages="serverErrors.sname"
+                    />
+                </VCol>
+
+                <!-- location -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.location" label="Location" :requireInput="true"
-                        :rules="[requiredValidator]" />
+                    <AppTextField
+                        v-model="clientData.location"
+                        :label="$t('clients.location')"
+                        :requireInput="true"
+                        :rules="[requiredValidator]"
+                        :error-messages="serverErrors.location"
+                    />
+                </VCol>
+
+                <!-- state -->
+                <VCol cols="12" md="6">
+                    <AppTextField
+                        v-model="clientData.state"
+                        :label="$t('clients.state')"
+                        :rules="[requiredValidator]"
+                        :requireInput="true"
+                        :error-messages="serverErrors.state"
+                    />
                 </VCol>
 
                 <!-- country -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.country" :rules="[requiredValidator]" :requireInput="true"
-                        label="Страна (двухбуквенный индекс) (C)" />
+                    <AppTextField
+                        v-model="clientData.country"
+                        :rules="[requiredValidator]"
+                        :requireInput="true"
+                        :label="$t('clients.country')"
+                        :error-messages="serverErrors.country"
+                    />
                 </VCol>
 
-                <!-- state  -->
+                <!-- address -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.state" persistent-placeholder label="oblast"
-                        :rules="[requiredValidator]" :requireInput="true" />
-                </VCol>
-
-                <!-- address  -->
-                <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.address" :rules="[requiredValidator]" :requireInput="true"
-                        label="Address" />
+                    <AppTextField
+                        v-model="clientData.address"
+                        :rules="[requiredValidator]"
+                        :requireInput="true"
+                        :label="$t('clients.address')"
+                        :error-messages="serverErrors.address"
+                    />
                 </VCol>
 
                 <!-- email -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.email" :rules="[requiredValidator, emailValidator]"
-                        :requireInput="true" label="Email" />
+                    <AppTextField
+                        v-model="clientData.email"
+                        :rules="[requiredValidator, emailValidator]"
+                        :requireInput="true"
+                        :label="$t('clients.email')"
+                        :error-messages="serverErrors.email"
+                    />
                 </VCol>
 
-
-                <!-- organisation  -->
+                <!-- organisation -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.organisation" :rules="[requiredValidator]" :requireInput="true"
-                        label="Organisation" />
+                    <AppTextField
+                        v-model="clientData.organisation"
+                        :rules="[requiredValidator]"
+                        :requireInput="true"
+                        :label="$t('clients.organisation')"
+                        :error-messages="serverErrors.organisation"
+                    />
                 </VCol>
 
-
-                <!-- org_unit  -->
+                <!-- org_unit -->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.org_unit" label="organisation OU" :requireInput="true"
-                        :rules="[requiredValidator]" />
+                    <AppTextField
+                        v-model="clientData.org_unit"
+                        :label="$t('clients.org_unit')"
+                        :requireInput="true"
+                        :rules="[requiredValidator]"
+                        :error-messages="serverErrors.org_unit"
+                    />
                 </VCol>
 
                 <!-- inn -->
-                <VCol cols="12" md="6">
+                <VCol cols="12" md="6" v-if="showInn">
                     <AppTextField
                         v-model="clientData.inn"
-                        label="INN"
+                        :label="$t('clients.inn')"
                         :requireInput="isInnRequired"
                         :rules="[innRule]"
+                        :error-messages="serverErrors.inn"
                     />
                 </VCol>
 
                 <!-- pinfl -->
-                <VCol cols="12" md="6">
+                <VCol cols="12" md="6" v-if="showPinfl">
                     <AppTextField
                         v-model="clientData.pinfl"
-                        label="PINFL"
+                        :label="$t('clients.pinfl')"
                         :requireInput="isPinflRequired"
                         :rules="[pinflRule]"
+                        :error-messages="serverErrors.pinfl"
                     />
                 </VCol>
 
-                <!-- phone  -->
+                <!-- phone -->
+<!--                <VCol cols="12" md="6">-->
+<!--                    <AppTextField-->
+<!--                        v-model="clientData.phone"-->
+<!--                        :rules="[requiredValidator, minLengthValidator(clientData.phone, 12)]"-->
+<!--                        :label="$t('clients.phone')"-->
+<!--                        :requireInput="true"-->
+<!--                        type="number"-->
+<!--                        :error-messages="serverErrors.phone"-->
+<!--                    />-->
+<!--                </VCol>-->
                 <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.phone"
-                        :rules="[requiredValidator, minLengthValidator(clientData.phone, 12)]" label="Phone"
-                        :requireInput="true" type="number" />
+                    <PhoneInput
+                        v-model="clientData.phone"
+                        :label="$t('clients.phone')"
+                        :requireInput="true"
+                        :error-messages="serverErrors.phone"
+                    />
                 </VCol>
-
-                <!-- type token  -->
-                <VCol cols="12" md="6">
-                    <AppSelect v-model="clientData.token_type" label="type token" item-title="label" item-value="value"
-                        :items="token_type" />
+                <!-- token_type -->
+                <VCol cols="12" md="6" v-if="showTokenFields">
+                    <AppSelect
+                        v-model="clientData.token_type"
+                        :label="$t('clients.token_type')"
+                        item-title="label"
+                        item-value="value"
+                        :items="token_type"
+                        :error-messages="serverErrors.token_type"
+                    />
                 </VCol>
 
                 <!-- token_sn -->
-                <VCol cols="12" md="6">
-                    <AppTextField v-model="clientData.token_sn" label="token_serialnumber"
-                        append-inner-icon="tabler-dots-vertical" :requireInput="false" />
+                <VCol cols="12" md="6" v-if="showTokenFields">
+                    <AppTextField
+                        v-model="clientData.token_sn"
+                        :label="$t('clients.token_sn')"
+                        :requireInput="true"
+                        readonly
+                        :error-messages="serverErrors.token_sn"
+                    >
+                        <template #append-inner>
+                            <VBtn
+                                icon
+                                variant="text"
+                                size="small"
+                                :loading="tokenLoading"
+                                @click="handleGetTokenSN"
+                            >
+                                <VIcon icon="tabler-antenna" size="20" />
+                                <VTooltip activator="parent" location="top">
+                                    {{ $t('clients.get_token_sn') }}
+                                </VTooltip>
+                            </VBtn>
+                        </template>
+                    </AppTextField>
                 </VCol>
 
-
-
-
-
-                <!-- file upload  -->
+                <!-- file upload -->
                 <VCol cols="12" md="6">
-                    <label>Прикрепить файл запроса<span class="asterisk">*</span>
+                    <label>
+                        {{ $t('clients.file_upload') }}
+                        <span class="asterisk">*</span>
                     </label>
-                    <VFileInput v-model="clientData.file_upload" color="primary" variant="outlined"
-                        :rules="[requiredValidator]" accept=".pdf" />
+                    <VFileInput
+                        v-model="clientData.file_upload"
+                        color="primary"
+                        variant="outlined"
+                        :rules="[requiredValidator]"
+                        accept=".pdf"
+                        :error-messages="serverErrors.file_upload"
+                    />
                 </VCol>
 
-                <VCol cols="12">
+                <!-- buttons -->
+                <VCol cols="12" class="d-flex justify-end">
+                    <VBtn variant="outlined" class="mr-3" @click="$router.back()">
+                        <VIcon size="18" icon="tabler-arrow-left" class="mr-1" />
+                        {{ $t('back') }}
+                    </VBtn>
                     <VBtn type="submit">
-                        Submit
+                        {{ $t('settingsModule.send') }}
                     </VBtn>
                 </VCol>
+
             </VRow>
         </VForm>
     </VCard>
 </template>
 
-
 <style lang="scss">
-.custom-file-upload {
-    // border: 2px solid #d1d5db;
-    border-radius: 6px;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    align-items: center;
-    justify-content: flex-start;
-    cursor: pointer;
-
-}
-
-.custom-file-upload label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    color: #4b5563;
-    width: 100%;
-    padding: 9px;
-}
-
-.asterisk {
-    color: #ea5455;
-}
+.asterisk { color: #ea5455; }
 </style>
