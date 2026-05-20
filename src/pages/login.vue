@@ -2,6 +2,7 @@
 import { useToast } from '@/@core/stores/toastConfig';
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?raw';
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?raw';
+import { getRulesForRole } from '@/plugins/casl/ability';
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer';
 import { themeConfig } from '@themeConfig';
 import { nextTick } from 'vue';
@@ -93,22 +94,24 @@ const login = () => {
   }).then(res => {
     const data = res.user
     const accessToken = res.accessToken ?? res.access
-    useCookie('userAbilityRules').value = users[1].abilityRules
-    ability.update(users[1].abilityRules)
+    const role = data.role || 'guest'
+
+    localStorage.setItem('userRole', role)
+
+    const abilityRules = getRulesForRole(role)
+    useCookie('userAbilityRules').value = abilityRules
+    ability.update(abilityRules)
     useCookie('userData').value = data
     useCookie('accessToken').value = accessToken
     store.successToast(t('success'))
     nextTick(() => {
       router.replace(route.query.to ? String(route.query.to) : '/')
-
     })
 
   }).catch(error => {
     const message = error?.response?._data?.message ?? error?.message ?? t('error')
     store.errorToast(message)
-
   })
-
 }
 
 const onSubmit = () => {

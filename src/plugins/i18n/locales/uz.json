@@ -156,7 +156,14 @@
     "actions": {
       "revoke": "Bekor qilish",
       "revoked": "Bekor qilingan",
-      "update": "Yangilash"
+      "update": "Yangilash",
+      "write_to_token": "Tokenga yozish",
+      "download_pfx":   "PFX yuklab olish"
+    },
+    "messages": {
+      "written_to_token": "Sertifikat tokenga muvaffaqiyatli yozildi",
+      "must_be_revoked":  "Sertifikat bekor qilingan bo'lishi kerak",
+      "ws_error":         "Token bilan ulanishda xatolik"
     }
   },
   "tokenModule": {

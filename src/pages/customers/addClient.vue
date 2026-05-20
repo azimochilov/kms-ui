@@ -475,17 +475,6 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- phone -->
-<!--                <VCol cols="12" md="6">-->
-<!--                    <AppTextField-->
-<!--                        v-model="clientData.phone"-->
-<!--                        :rules="[requiredValidator, minLengthValidator(clientData.phone, 12)]"-->
-<!--                        :label="$t('clients.phone')"-->
-<!--                        :requireInput="true"-->
-<!--                        type="number"-->
-<!--                        :error-messages="serverErrors.phone"-->
-<!--                    />-->
-<!--                </VCol>-->
                 <VCol cols="12" md="6">
                     <PhoneInput
                         v-model="clientData.phone"

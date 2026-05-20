@@ -1,11 +1,12 @@
-import { createMongoAbility } from '@casl/ability'
 import { abilitiesPlugin } from '@casl/vue'
+import { defineAbilityFor } from './ability'
+
+const savedRole = localStorage.getItem('userRole') || 'guest'
+
+export const ability = defineAbilityFor(savedRole)
 
 export default function (app) {
-  const userAbilityRules = useCookie('userAbilityRules')
-  const initialAbility = createMongoAbility(userAbilityRules.value ?? [])
-
-  app.use(abilitiesPlugin, initialAbility, {
-    useGlobalProperties: true,
-  })
+    app.use(abilitiesPlugin, ability, {
+        useGlobalProperties: true,
+    })
 }

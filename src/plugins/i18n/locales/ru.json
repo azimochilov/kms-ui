@@ -155,7 +155,14 @@
     "actions": {
       "revoke": "Отозвать",
       "revoked": "Отозван",
-      "update": "Обновить"
+      "update": "Обновить",
+      "write_to_token": "Записать на токен",
+      "download_pfx":   "Скачать PFX"
+    },
+    "messages": {
+      "written_to_token": "Сертификат успешно записан на токен",
+      "must_be_revoked":  "Сертификат должен быть отозван",
+      "ws_error":         "Ошибка подключения к токену"
     }
   },
   "tokenModule": {

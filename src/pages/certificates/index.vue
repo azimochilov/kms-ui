@@ -14,7 +14,7 @@ const { t } = useI18n()
 definePage({
     meta: {
         action: 'read',
-        subject: 'AclDemo',
+        subject: 'operator',
     }
 })
 
@@ -151,6 +151,57 @@ const onReissued = () => {
     refresh()
 }
 
+// Tokenga yozish — WebSocket orqali
+const writeToToken = async (item) => {
+    const ws = new WebSocket('ws://localhost:8181')
+
+    let response = await $api('')
+
+    ws.onopen = () => {
+        const msg = JSON.stringify({
+            function: 'importCert',
+            token_sn: item.token_sn,           // jadvalda device_id_number
+            obj: item.public_key,              // base64 sertifikat
+            token_type: item.device_type,      // platform (android/ios/windows...)
+        })
+        ws.send(msg)
+    }
+
+    ws.onmessage = (evt) => {
+        const res = JSON.parse(evt.data)
+        if (res.status === 'success') {
+            // Django endpointga POST — sertifikat tokenga yozildi deb belgilash
+            axios.post(`/api/certificates/set_cert_active/`, {
+                cert_sn: item.cert_sn
+            }).then(() => {
+                toast.success($t('certificates.messages.written_to_token'))
+                fetchCertificates()   // jadval refresh
+            })
+        } else {
+            if (res.comments === 'check cert') {
+                toast.error($t('certificates.messages.must_be_revoked'))
+            } else {
+                toast.error(res.comments)
+            }
+        }
+    }
+
+    ws.onclose = () => {
+        console.warn('WebSocket connection closed')
+    }
+
+    ws.onerror = (err) => {
+        console.error('WebSocket error:', err)
+        toast.error($t('certificates.messages.ws_error'))
+    }
+}
+
+// PFX yuklab olish — Django endpoint orqali
+const downloadPFX = (item) => {
+    const filename = item.cert_sn + item.cname?.replace(/ /g, '_')
+    window.open(`/api/certificates/${filename}/`, '_blank')
+}
+
 // const updateItem = async (item) => {
 //     // file input ochish
 //     const input = document.createElement('input')
@@ -254,6 +305,27 @@ const onReissued = () => {
                                     <VIcon size="24" icon="tabler-dots-vertical" />
                                     <VMenu activator="parent">
                                         <VList>
+                                            <!-- Tokenga yozish — faqat status == 1 da ko'rinadi -->
+                                            <VListItem
+                                                v-if="item.status == 1"
+                                                @click="writeToToken(item)"
+                                            >
+                                                <template #prepend>
+                                                    <VIcon icon="tabler-usb" color="#7367F0" />
+                                                </template>
+                                                <VListItemTitle>{{ $t('certificates.actions.write_to_token') }}</VListItemTitle>
+                                            </VListItem>
+
+                                            <!-- PFX yuklab olish — faqat status == 2 da ko'rinadi -->
+                                            <VListItem
+                                                v-if="item.status == 2"
+                                                @click="downloadPFX(item)"
+                                            >
+                                                <template #prepend>
+                                                    <VIcon icon="tabler-file-certificate" color="#FF9F43" />
+                                                </template>
+                                                <VListItemTitle>{{ $t('certificates.actions.download_pfx') }}</VListItemTitle>
+                                            </VListItem>
 
                                             <!-- Bekor qilish -->
                                             <VListItem
