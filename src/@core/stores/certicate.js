@@ -7,6 +7,7 @@ export const useCertificate = defineStore("certificate", {
         certificateApiPrefix: 'certificates/',
         certificates: {
             data: [],
+            all_data: [],
             pagination: {
                 total: 0,
             },
@@ -52,27 +53,51 @@ export const useCertificate = defineStore("certificate", {
             }
 
             items.forEach(item => {
-                if (item?.status === 3 || item?.status === 'active')
+                const statusValue = Number(item?.status)
+
+                if (statusValue === 4)
                     report.active += 1
-                else if (item?.status === 2 || item?.status === 'updated')
+                else if (statusValue === 3)
                     report.updated += 1
-                else if (item?.status === 1 || item?.status === 'revoked')
+                else if (statusValue === 0)
                     report.rejected += 1
             })
 
             return report
         },
 
-        normalizeListResponse(res) {
-            const payload = res?.data ?? res?.result ?? res
-            const rawItems = Array.isArray(payload)
-                ? payload
-                : Array.isArray(payload?.results)
-                    ? payload.results
-                    : Array.isArray(payload?.data)
-                        ? payload.data
-                        : []
+        extractRawItems(payload) {
+            if (Array.isArray(payload))
+                return payload
 
+            if (Array.isArray(payload?.results))
+                return payload.results
+
+            if (Array.isArray(payload?.data))
+                return payload.data
+
+            return []
+        },
+
+        parseStatusReport(payload, items) {
+            const backendReport = payload?.status_report ?? payload?.statusReport
+            const report = backendReport && typeof backendReport === 'object'
+                ? {
+                    active: Number(backendReport.active ?? backendReport.installed ?? 0),
+                    updated: Number(backendReport.updated ?? 0),
+                    rejected: Number(backendReport.rejected ?? backendReport.revoked ?? 0),
+                }
+                : this.buildStatusReport(items)
+
+            report.total = Number(payload?.count ?? items.length)
+
+            return report
+        },
+
+        normalizeListResponse(res, options = {}) {
+            const { updateStatusReport = false } = options
+            const payload = res?.data ?? res?.result ?? res
+            const rawItems = this.extractRawItems(payload)
             const items = rawItems.map((item, index) => this.normalizeCertificate(item, index))
             const total = payload?.count
                 ?? payload?.pagination?.total
@@ -83,7 +108,9 @@ export const useCertificate = defineStore("certificate", {
                 pagination: {
                     total,
                 },
-                status_report: payload?.status_report ?? this.buildStatusReport(items),
+                status_report: updateStatusReport
+                    ? this.parseStatusReport(payload, items)
+                    : this.certificates.status_report,
             }
         },
 
@@ -112,6 +139,26 @@ export const useCertificate = defineStore("certificate", {
         },
 
 
+
+        async fetchStatusReport() {
+            try {
+                const res = await this.fetchFromAvailableEndpoints({
+                    page_size: 5000,
+                    page: 1,
+                })
+                const payload = res?.data ?? res?.result ?? res
+                const rawItems = this.extractRawItems(payload)
+                const items = rawItems.map((item, index) => this.normalizeCertificate(item, index))
+
+                this.certificates.all_data = items
+                this.certificates.data = items
+                this.certificates.pagination.total = Number(payload?.count ?? items.length)
+                this.certificates.status_report = this.parseStatusReport(payload, items)
+            }
+            catch {
+                // Keep the previous report if stats request fails.
+            }
+        },
 
         async fetchCertificate(per_page, page) {
             const query = {}

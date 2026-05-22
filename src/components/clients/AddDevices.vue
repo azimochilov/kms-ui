@@ -124,21 +124,21 @@ const handleDrawerModelValueUpdate = val => {
 
                             <!-- 👉 type -->
                             <VCol cols="12">
-                                <AppTextField v-model="deviceData.type" label="type " :requireInput="true"
+                                <AppTextField v-model="deviceData.type" :label="$t('settingsModule.type')" :requireInput="true"
                                     :rules="[requiredValidator]" />
                             </VCol>
 
 
                             <!-- 👉 device_id_type -->
                             <VCol cols="12">
-                                <AppTextField v-model="deviceData.device_id_number" label="device_id_number"
+                                <AppTextField v-model="deviceData.device_id_number" :label="$t('clients.device_id_number')"
                                     :requireInput="true" :rules="[requiredValidator]" />
                             </VCol>
 
 
                             <!-- 👉 device_id_type -->
                             <VCol cols="12">
-                                <AppTextField v-model="deviceData.device_id_type" label="device_id_type"
+                                <AppTextField v-model="deviceData.device_id_type" :label="$t('clients.device_id_type')"
                                     :rules="[requiredValidator]" :requireInput="true" />
                             </VCol>
 

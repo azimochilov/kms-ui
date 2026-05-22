@@ -34,11 +34,16 @@ const deleteItemConfirm = () => {
             refresh()
         }).catch(error => {
             const errors = error?.response?._data?.errors
+            const detail = error?.response?._data?.detail
             const message = error?.response?._data?.message || error?.message
             if (errors)
                 storetoast.errorsNotfications(errors)
+            else if (detail)
+                storetoast.errorToast(String(detail))
             else
                 storetoast.errorToast(message || t('error'))
+            deleteDialog.value = false
+            itemId.value = null
 
         })
 }
@@ -53,6 +58,18 @@ const filters = ref({
     search: '',
     status: null,
 })
+const normalizeStatusFilter = value => {
+    const normalizedValue = typeof value === 'object' && value !== null
+        ? (value.value ?? value.id ?? value.title ?? value)
+        : value
+
+    if (normalizedValue === null || normalizedValue === undefined || normalizedValue === '')
+        return null
+
+    const parsed = Number(normalizedValue)
+
+    return Number.isFinite(parsed) ? parsed : null
+}
 const statusOptions = computed(() => [
     { value: 1, title: t('settingsModule.active') },
     { value: 0, title: t('settingsModule.inactive') },
@@ -82,13 +99,19 @@ const deleteUser = (id) => {
     deleteDialog.value = true
 }
 
-const editUser = (id) => {
+const editUser = async (id) => {
     if (!id) {
         storetoast.errorToast(t('error'))
         return
     }
 
-    updateDataId.value = id
+    const resolvedId = await store.resolveUserIdFromRow(id)
+    if (!resolvedId) {
+        storetoast.errorToast(t('error'))
+        return
+    }
+
+    updateDataId.value = resolvedId
     isAddNewUserDrawerVisible.value = true
 }
 
@@ -98,9 +121,39 @@ const getUserId = (tableItem) => {
     return rawItem?.id ?? rawItem?.user_id ?? rawItem?.pk ?? rawItem?.uid ?? null
 }
 
+const tableItems = computed(() => {
+    const rawItems = Array.isArray(store.users?.data) ? store.users.data : []
+    const statusFilter = normalizeStatusFilter(filters.value.status)
+    const search = String(filters.value.search ?? '').trim().toLowerCase()
+
+    return rawItems.filter(item => {
+        if (statusFilter !== null && Number(item?.status) !== statusFilter)
+            return false
+
+        if (!search)
+            return true
+
+        const haystack = [
+            item?.username,
+            item?.full_name,
+            item?.branch,
+            item?.type,
+            item?.mfo,
+        ]
+            .filter(Boolean)
+            .map(value => String(value).toLowerCase())
+            .join(' ')
+
+        return haystack.includes(search)
+    })
+})
+
 const refresh = () => {
     load.value = true
-    store.fetchUsers(options.value.itemsPerPage, options.value.page, filters.value)
+    store.fetchUsers(options.value.itemsPerPage, options.value.page, {
+        ...filters.value,
+        status: normalizeStatusFilter(filters.value.status),
+    })
         .then(() => {
             load.value = false
         }).catch(error => {
@@ -148,6 +201,12 @@ watch(() => filters.value.search, () => {
 })
 
 watch(() => filters.value.status, () => {
+    const normalizedStatus = normalizeStatusFilter(filters.value.status)
+    if (filters.value.status !== normalizedStatus) {
+        filters.value.status = normalizedStatus
+        return
+    }
+
     options.value.page = 1
     refresh()
 })
@@ -187,7 +246,7 @@ watch(() => options.value.itemsPerPage, () => {
             </VCol>
         </VRow>
 
-        <VDataTable :headers="headers" :items="store.users?.data || []" :loading="load">
+        <VDataTable :headers="headers" :items="tableItems" :loading="load">
 
 
             <template #no-data>
@@ -219,14 +278,14 @@ watch(() => options.value.itemsPerPage, () => {
                                     <template #prepend>
                                         <VIcon icon="tabler-pencil" />
                                     </template>
-                                    <VListItemTitle>Edit</VListItemTitle>
+                                    <VListItemTitle>{{ $t('settingsModule.edit') }}</VListItemTitle>
                                 </VListItem>
 
                                 <VListItem @click="deleteUser(getUserId(item))">
                                     <template #prepend>
                                         <VIcon icon="tabler-trash" />
                                     </template>
-                                    <VListItemTitle>Delete</VListItemTitle>
+                                    <VListItemTitle>{{ $t('common.delete') }}</VListItemTitle>
                                 </VListItem>
 
                                 <VListItem @click="isDialogVisible = true, passwordId = getUserId(item)">
@@ -247,8 +306,8 @@ watch(() => options.value.itemsPerPage, () => {
 
 
 
-            <template #item.id="{ index }">
-                <span>{{ index + 1 }}</span>
+            <template #item.id="{ item, index }">
+                <span>{{ item?.row_index ?? (index + 1) }}</span>
             </template>
 
             <template #item.status="{ item }">

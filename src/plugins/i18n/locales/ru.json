@@ -10,6 +10,13 @@
   "search": "Поиск",
   "select_status": "Выберите статус",
   "back": "Назад",
+  "common": {
+    "delete_confirm": "Вы действительно хотите удалить этот элемент?",
+    "ok": "OK",
+    "delete": "Удалить",
+    "show": "Просмотр",
+    "loading": "Загрузка..."
+  },
   "settingsModule": {
     "client_created": "Клиент успешно создан",
     "control": "Управление",
@@ -31,6 +38,7 @@
     "change": "Изменять",
     "user_deleted": "Пользователь успешно удален.",
     "client_deleted": "Клиент успешно удален.",
+    "client_updated": "Клиент успешно обновлен.",
     "active": "Активный",
     "inactive": "Неактивный",
     "device_deleted": "Устройство успешно удалено.",
@@ -105,7 +113,11 @@
     "phoneNumber": "Телефон номер",
     "attachRequestFile": "Прикрепить файл запроса",
     "chooseFile": "Выберите файл",
-    "mobile_banking": "Мобильный банкинг"
+    "mobile_banking": "Мобильный банкинг",
+    "client_devices": "Устройства клиента",
+    "client_certificates": "Сертификаты клиента",
+    "device_id_type": "Тип ID устройства",
+    "device_id_number": "ID устройства"
   },
   "requests": {
     "title": "Запросы",

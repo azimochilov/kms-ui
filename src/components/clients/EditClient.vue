@@ -94,18 +94,17 @@ const sendClientUpdate = () => {
         if (valid) {
 
             store.updateClient(props.update_dataId, formDataa)
-            // .then(res => {
-
-
-            //     // handleSuccess()
-
-
-
-            // }).catch(error => {
-            //     console.log(error, 'errror');
-
-            //     // storeToast.errorToast(error.response._data.message)
-            // })
+                .then(() => {
+                    storeToast.successToast(t('settingsModule.client_updated'))
+                    handleSuccess()
+                }).catch(error => {
+                    const message = error?.response?._data?.message
+                        ?? error?.response?._data?.detail
+                        ?? error?.response?._data?.errors
+                        ?? error?.message
+                        ?? t('error')
+                    storeToast.errorToast(String(message))
+                })
 
 
 

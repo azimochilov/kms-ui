@@ -54,25 +54,25 @@ const store = useClient()
 const updateDataId = ref(null)
 const clientData = ref(null)
 // headers
-const headers = [
+const headers = computed(() => [
     { title: '№', key: 'id' },
-    { title: 'Тип ID', key: 'type' },
-    { title: 'ID устройства', key: 'device_id' },
-    { title: 'Статус', key: 'status' },
+    { title: t('clients.device_id_type'), key: 'type' },
+    { title: t('clients.device_id_number'), key: 'device_id' },
+    { title: t('settingsModule.status'), key: 'status' },
     { title: t('settingsModule.action'), key: 'actions' },
-]
+])
 
 // headers
-const headersCertificate = [
+const headersCertificate = computed(() => [
     { title: '№', key: 'id' },
-    { title: 'ФИо владельца', key: 'cname' },
-    { title: 'серийный номер токена', key: 'token_sn' },
-    { title: 'серийный номер сертификата', key: 'cert_sn' },
-    { title: 'с (дата)', key: 'cert_from' },
-    { title: 'до (дата)', key: 'cert_to' },
+    { title: t('certificates.owner_name'), key: 'cname' },
+    { title: t('certificates.token_serial_number'), key: 'token_sn' },
+    { title: t('certificates.certificate_serial_number'), key: 'cert_sn' },
+    { title: t('certificates.from_date'), key: 'cert_from' },
+    { title: t('certificates.to_date'), key: 'cert_to' },
     // { title: 'дата', key: 'test2' },
     { title: t('settingsModule.action'), key: 'actions' },
-]
+])
 
 
 
@@ -123,7 +123,7 @@ onMounted(() => {
                 <p class="text-22 font-roboto">
                     <VIcon size="22" icon="tabler-devices" />
                     <!-- {{ $t('settingsModule.control') }} -->
-                    Устройства клиента
+                    {{ $t('clients.client_devices') }}
                 </p>
             </VCol>
             <VCol class="d-flex justify-end">
@@ -187,7 +187,7 @@ onMounted(() => {
                 <p class="text-22 font-roboto">
                     <VIcon size="22" icon="tabler-file-certificate" />
                     <!-- {{ $t('settingsModule.control') }} -->
-                    Сертификаты клиента
+                    {{ $t('clients.client_certificates') }}
                 </p>
             </VCol>
         </VRow>
@@ -201,7 +201,7 @@ onMounted(() => {
             <!-- Actions -->
             <template #item.actions="{ item }">
                 <div>
-                    Отозван
+                    {{ $t('certificates.actions.revoked') }}
                 </div>
             </template>
             <template #item.id="{ index }">

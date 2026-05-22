@@ -10,6 +10,13 @@
   "search": "Qidiruv",
   "select_status": "Status-ni tanlang",
   "back": "Orqaga",
+  "common": {
+    "delete_confirm": "Haqiqatan ham ushbu elementni o'chirmoqchimisiz?",
+    "ok": "OK",
+    "delete": "O'chirish",
+    "show": "Ko'rsatish",
+    "loading": "Yuklanmoqda..."
+  },
   "settingsModule": {
     "client_created": "Mijoz muvaffaqiyatli yaratildi",
     "control": "Nazorat",
@@ -31,6 +38,7 @@
     "change": "O'zgartirish",
     "user_deleted": "Foydalanuvchi muvaffaqiyatli o'chirildi",
     "client_deleted": "Mijoz muvaffaqiyatli o'chirildi",
+    "client_updated": "Mijoz muvaffaqiyatli yangilandi",
     "active": "Faol",
     "inactive": "Nofaol",
     "device_deleted": "Qurilma muvaffaqiyatli o'chirildi.",
@@ -106,7 +114,11 @@
     "phoneNumber": "Telefon raqami",
     "attachRequestFile": "So‘rov faylini biriktirish",
     "chooseFile": "Fayl tanlang",
-    "mobile_banking": "Mobil banking"
+    "mobile_banking": "Mobil banking",
+    "client_devices": "Mijoz qurilmalari",
+    "client_certificates": "Mijoz sertifikatlari",
+    "device_id_type": "Qurilma ID turi",
+    "device_id_number": "Qurilma ID raqami"
   },
   "requests": {
     "title": "So'rovlar",

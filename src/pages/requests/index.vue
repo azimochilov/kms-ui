@@ -40,7 +40,7 @@ const deleteItemConfirm = () => {
 }
 
 
-const options = ref({ page: 1, itemsPerPage: 12, sortBy: [''], sortDesc: [false] })
+const options = ref({ page: 1, itemsPerPage: 10, sortBy: [''], sortDesc: [false] })
 const isAddNewUserDrawerVisible = ref(false)
 const load = ref(true)
 const store = useRequests()
@@ -48,8 +48,20 @@ const statusData = ref(null)
 const request_id = ref(null)
 const request_item = ref(null)
 const status = ref(null)
+const searchQuery = ref('')
 
+const normalizeStatusFilter = value => {
+    const normalizedValue = typeof value === 'object' && value !== null
+        ? (value.value ?? value.id ?? value.title ?? value)
+        : value
 
+    if (normalizedValue === null || normalizedValue === undefined || normalizedValue === '')
+        return null
+
+    const parsed = Number(normalizedValue)
+
+    return Number.isFinite(parsed) ? parsed : null
+}
 
 const headers = computed(() => [
     { title: '№', key: 'id' },
@@ -84,6 +96,67 @@ const typeDevice = (data) => {
 
 }
 
+const statusReport = computed(() => {
+    const report = store.requests?.status_report ?? {}
+
+    return {
+        new: Number(report.new ?? 0),
+        approved: Number(report.approved ?? 0),
+        rejected: Number(report.rejected ?? 0),
+        total: Number(report.total ?? 0)
+            || Number(report.new ?? 0) + Number(report.approved ?? 0) + Number(report.rejected ?? 0),
+    }
+})
+
+const tableItems = computed(() => {
+    const rawItems = store.requests?.all_data?.length
+        ? store.requests.all_data
+        : (store.requests?.data ?? [])
+    const statusFilter = normalizeStatusFilter(status.value)
+    const search = String(searchQuery.value ?? '').trim().toLowerCase()
+
+    return rawItems.filter(item => {
+        if (statusFilter !== null && Number(item?.status) !== statusFilter)
+            return false
+
+        if (!search)
+            return true
+
+        const haystack = [
+            item?.token_sn,
+            item?.cname,
+            item?.organization,
+            item?.org_unit,
+            item?.branch,
+            typeDevice(item?.type),
+            item?.type,
+        ]
+            .filter(Boolean)
+            .map(value => String(value).toLowerCase())
+            .join(' ')
+
+        return haystack.includes(search)
+    })
+})
+
+const totalPages = computed(() => {
+    const perPage = Number(options.value.itemsPerPage)
+    if (perPage <= 0)
+        return 1
+
+    return Math.max(1, Math.ceil(tableItems.value.length / perPage))
+})
+
+const paginatedItems = computed(() => {
+    const perPage = Number(options.value.itemsPerPage)
+    if (perPage <= 0)
+        return tableItems.value
+
+    const start = (options.value.page - 1) * perPage
+
+    return tableItems.value.slice(start, start + perPage)
+})
+
 
 
 
@@ -97,22 +170,23 @@ const deleteUser = (id) => {
 const statusCreate = (value, id) => {
     request_id.value = id
     statusData.value = value
-    request_item.value = store.requests?.data?.find(item => item.id === id) || null
+    request_item.value = tableItems.value.find(item => item.id === id)
+        || store.requests?.all_data?.find(item => item.id === id)
+        || null
     isAddNewUserDrawerVisible.value = true
 }
 
 const refresh = () => {
     load.value = true
-    store.fetchRequest(options.value.itemsPerPage, options.value.page)
+    store.fetchStatusReport()
         .then(() => {
-
             load.value = false
         }).catch(error => {
-            if (error.response.status >= 500) {
+            if (error.response?.status >= 500) {
                 storetoast.errorToast('server xatoligi')
 
             }
-            else {
+            else if (error.response?._data?.errors) {
                 storetoast.errorsNotfications(error.response._data.errors)
 
             }
@@ -122,22 +196,46 @@ const refresh = () => {
 }
 
 
-watch(status, (newValue) => {
-    if (newValue !== null && newValue !== undefined) {
-        store.filterRequest(newValue)
+watch(status, newValue => {
+    const normalizedStatus = normalizeStatusFilter(newValue)
+    if (newValue !== normalizedStatus) {
+        status.value = normalizedStatus
+        return
     }
-    else {
-        refresh()
-    }
+
+    options.value.page = 1
 })
 
+watch(searchQuery, () => {
+    options.value.page = 1
+})
 
+watch(() => options.value.itemsPerPage, () => {
+    options.value.page = 1
+})
 
-watch(() => options.value.itemsPerPage, (newValue) => {
-    if (newValue) {
-        refresh()
+const onItemsPerPageChange = value => {
+    const normalizedValue = typeof value === 'object' && value !== null
+        ? (value.value ?? value.id ?? value.title ?? value)
+        : value
+
+    const parsed = Number(normalizedValue)
+    if (Number.isFinite(parsed)) {
+        options.value.itemsPerPage = parsed
+        return
     }
-}, { deep: true })
+
+    if (String(normalizedValue).toLowerCase() === 'all')
+        options.value.itemsPerPage = -1
+}
+
+const itemsPerPageOptions = computed(() => [
+    { value: 10, title: '10' },
+    { value: 25, title: '25' },
+    { value: 50, title: '50' },
+    { value: 100, title: '100' },
+    { value: -1, title: t('clients.all') },
+])
 
 
 onMounted(() => {
@@ -152,7 +250,7 @@ const getRowProps = (item) => {
     return {}
 }
 
-const statuFilterData = ref([
+const statuFilterData = computed(() => [
     { value: 0, label: t('requests.new') },
     { value: 1, label: t('requests.approved') },
     { value: 2, label: t('requests.rejected') },
@@ -174,7 +272,8 @@ const statuFilterData = ref([
 
 
                 <VCol cols="12" sm="6">
-                    <AppTextField :placeholder="$t('search')" density="compact" prepend-inner-icon="tabler-search" />
+                    <AppTextField v-model="searchQuery" :placeholder="$t('search')" density="compact"
+                        prepend-inner-icon="tabler-search" />
                 </VCol>
                 <!-- 👉 Select Status -->
                 <VCol cols="12" sm="4">
@@ -187,26 +286,24 @@ const statuFilterData = ref([
                     <div class="w-100 h-100 border rounded d-flex align-center justify-space-between px-4">
                         <div>
                             {{ $t('clients.all') }}
+                            <span class="ms-1">{{ statusReport.total }}</span>
                         </div>
 
                         <div>
                             <VIcon size="24" icon="tabler-history" color="#00BAD1" class="mr-1" />
-                            <span>{{ store.requests?.status_report?.new ? store.requests?.status_report?.new : 0
-                            }}</span>
+                            <span>{{ statusReport.new }}</span>
                         </div>
 
 
                         <div>
                             <VIcon size="24" icon="tabler-circle-check" color="#28C76F" class="mr-1" />
-                            <span>{{ store.requests?.status_report?.approved ? store.requests?.status_report?.approved :
-                                0 }}</span>
+                            <span>{{ statusReport.approved }}</span>
                         </div>
 
 
                         <div>
                             <VIcon size="24" icon="tabler-circle-x" color="#FF4C51" class="mr-1" />
-                            <span>{{ store.requests?.status_report?.rejected ? store.requests?.status_report?.rejected :
-                                0 }}</span>
+                            <span>{{ statusReport.rejected }}</span>
                         </div>
 
 
@@ -221,23 +318,29 @@ const statuFilterData = ref([
                 </VCol>
 
                 <VCol col="12">
-
-                    <AppSelect :model-value="options.itemsPerPage" :items="[
-                        { value: 10, title: '10' },
-                        { value: 25, title: '25' },
-                        { value: 50, title: '50' },
-                        { value: 100, title: '100' },
-                        { value: -1, title: 'All' },
-                    ]" style="inline-size: 6.25rem;"
-                        @update:model-value="options.itemsPerPage = parseInt($event, 10)" />
+                    <AppSelect
+                        :model-value="options.itemsPerPage"
+                        :items="itemsPerPageOptions"
+                        item-title="title"
+                        item-value="value"
+                        style="inline-size: 6.25rem;"
+                        @update:model-value="onItemsPerPageChange"
+                    />
                 </VCol>
 
             </VCol>
 
         </VRow>
-        <VDataTable :headers="headers" :items="store.requests?.data || []" :loading="load" :hover="true"
-            loading-text="yuklanmoqda">
-            <template #item="{ item, columns }">
+        <VDataTable
+            :headers="headers"
+            :items="paginatedItems"
+            :items-per-page="-1"
+            :loading="load"
+            :hover="true"
+            :loading-text="$t('common.loading')"
+            hide-default-footer
+        >
+            <template #item="{ item, columns, index }">
                 <tr :class="getRowProps(item)">
                     <td v-for="column in columns" :key="column.key">
 
@@ -285,6 +388,14 @@ const statuFilterData = ref([
 
 
                             <!-- boshqa ustunlar uchun oddiy value -->
+                            <template v-else-if="column.key === 'id'">
+                                {{
+                                    options.itemsPerPage > 0
+                                        ? (options.page - 1) * options.itemsPerPage + index + 1
+                                        : index + 1
+                                }}
+                            </template>
+
                             <template v-else>
                                 {{ item[column.key] }}
                             </template>
@@ -315,10 +426,12 @@ const statuFilterData = ref([
             <template #bottom>
                 <VCardText class="pt-2">
                     <div class="d-flex justify-end">
-                        <VPagination v-if="store.requests?.pagination" v-model="options.page"
+                        <VPagination
+                            v-if="tableItems.length"
+                            v-model="options.page"
                             :total-visible="$vuetify.display.smAndDown ? 3 : 5"
-                            :length="Math.ceil(store.requests?.pagination?.total / options.itemsPerPage)"
-                            @click="refresh" />
+                            :length="totalPages"
+                        />
                     </div>
                 </VCardText>
 

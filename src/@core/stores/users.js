@@ -4,7 +4,7 @@ import { defineStore } from "pinia";
 export const useUsers = defineStore("users", {
 
     state: () => ({
-        userApiPrefix: 'users/users/',
+        userApiPrefix: 'users/',
         users: {
             data: [],
             pagination: {
@@ -15,11 +15,15 @@ export const useUsers = defineStore("users", {
     }),
     actions: {
         getUserListEndpoint() {
-            return 'users/users/'
+            return 'users/'
         },
 
         getUserDetailEndpoint(id) {
-            return `users/users/${id}`
+            return `users//${id}`
+        },
+
+        getUserDetailEndpointFallback(id) {
+            return `users/${id}`
         },
 
         mapRoleToApi(role) {
@@ -50,7 +54,8 @@ export const useUsers = defineStore("users", {
 
             return {
                 ...item,
-                id: userId ?? index + 1,
+                id: userId,
+                row_index: index + 1,
                 username: item?.username ?? '-',
                 full_name: fullName || '-',
                 branch: item?.branch ?? item?.org_unit ?? '-',
@@ -128,6 +133,27 @@ export const useUsers = defineStore("users", {
             return res
         },
 
+        async requestUserDetail(id, options = {}) {
+            const candidates = [
+                this.getUserDetailEndpoint(id),
+                this.getUserDetailEndpointFallback(id),
+            ]
+            let lastError = null
+
+            for (const endpoint of candidates) {
+                try {
+                    return await $api(endpoint, options)
+                } catch (error) {
+                    const statusCode = error?.response?.status
+                    if (statusCode !== 404)
+                        throw error
+                    lastError = error
+                }
+            }
+
+            throw lastError
+        },
+
         // create user
         async createUser(data) {
             const payload = this.buildUserPayload(data)
@@ -159,7 +185,7 @@ export const useUsers = defineStore("users", {
 
         // delete user
         async deleteUsers(id) {
-            return await $api(this.getUserDetailEndpoint(id), {
+            return await this.requestUserDetail(id, {
                 method: 'DELETE',
             })
         },
@@ -171,7 +197,10 @@ export const useUsers = defineStore("users", {
             const localMatch = this.users?.data?.find(item =>
                 item?.id === rowId
                 || item?.user_id === rowId
-                || item?.pk === rowId,
+                || item?.pk === rowId
+                || String(item?.id) === String(rowId)
+                || String(item?.user_id) === String(rowId)
+                || String(item?.pk) === String(rowId),
             )
 
             return localMatch?.id ?? localMatch?.user_id ?? localMatch?.pk ?? rowId
@@ -183,11 +212,15 @@ export const useUsers = defineStore("users", {
             try {
                 return await this.deleteUsers(resolvedId)
             } catch {
-                // If row id is just display index, try using index -> local item id.
-                const indexCandidate = Number(rowId) - 1
-                const indexedItem = Number.isInteger(indexCandidate) && indexCandidate >= 0
-                    ? this.users?.data?.[indexCandidate]
-                    : null
+                // As a fallback, match by row id against display/local identifiers.
+                const indexedItem = this.users?.data?.find(item =>
+                    item?.id === rowId
+                    || item?.user_id === rowId
+                    || item?.pk === rowId
+                    || String(item?.id) === String(rowId)
+                    || String(item?.user_id) === String(rowId)
+                    || String(item?.pk) === String(rowId),
+                )
                 const fallbackId = indexedItem?.id ?? indexedItem?.user_id ?? indexedItem?.pk
 
                 if (!fallbackId)
@@ -200,32 +233,59 @@ export const useUsers = defineStore("users", {
         // update user
         async updateUsers(id, data) {
             const payload = this.buildUserPayload(data)
-            return await $api(this.getUserDetailEndpoint(id), {
+            return await this.requestUserDetail(id, {
                 method: 'PUT',
                 body: payload,
             })
         },
 
         async fetOneUser(id) {
-            return await $api(this.getUserDetailEndpoint(id))
+            return await this.requestUserDetail(id)
         },
 
         async changePassword(id, data) {
-            if (id) {
+            const payload = {
+                old_password: data?.old_password ?? data?.password ?? undefined,
+                new_password: data?.new_password ?? data?.password_confirmation ?? undefined,
+            }
+
+            Object.keys(payload).forEach(key => {
+                if (payload[key] === undefined)
+                    delete payload[key]
+            })
+
+            const endpointCandidates = [
+                ...(id ? [
+                    `users/${id}/change-password`,
+                    `users/${id}/change-password/`,
+                    `Users/${id}/change-password`,
+                    `Users/${id}/change-password/`,
+                ] : []),
+                `users/change-password`,
+                `users/change-password/`,
+                `Users/change-password`,
+                `Users/change-password/`,
+            ]
+            let lastError = null
+
+            for (const endpoint of endpointCandidates) {
                 try {
-                    return await $api(`users/users/${id}/change-password`, {
+                    return await $api(endpoint, {
                         method: 'POST',
-                        body: data,
+                        body: payload,
                     })
-                } catch {
-                    // fall through to self-password endpoint below
+                } catch (error) {
+                    const statusCode = error?.response?.status
+                    if (statusCode === 404) {
+                        lastError = error
+                        continue
+                    }
+
+                    throw error
                 }
             }
 
-            return await $api(`users/change-password`, {
-                method: 'POST',
-                body: data,
-            })
+            throw lastError ?? new Error('Change password endpoint not found')
         }
 
     }

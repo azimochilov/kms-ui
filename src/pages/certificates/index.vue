@@ -27,9 +27,10 @@ const userData = useCookie('userData')
 const isAdmin = computed(() => userData.value?.role === 'admin')
 
 // --- table options ---
-const options = ref({ page: 1, itemsPerPage: 12, sortBy: [''], sortDesc: [false] })
+const options = ref({ page: 1, itemsPerPage: 10, sortBy: [''], sortDesc: [false] })
 const load = ref(true)
 const status = ref(null)
+const searchQuery = ref('')
 const isAddNewUserDrawerVisible = ref(false)
 const updateDataId = ref(null)
 
@@ -68,16 +69,104 @@ const headers = computed(() => [
 ])
 
 // --- status filter ---
-const statuFilterData = ref([
+const statuFilterData = computed(() => [
     { value: 4, label: t('certificates.statuses.installed') },
     { value: 3, label: t('certificates.statuses.updated') },
     { value: 0, label: t('certificates.statuses.revoked') },
 ])
 
+const normalizeStatusFilter = value => {
+    const normalizedValue = typeof value === 'object' && value !== null
+        ? (value.value ?? value.id ?? value.title ?? value)
+        : value
+
+    if (normalizedValue === null || normalizedValue === undefined || normalizedValue === '')
+        return null
+
+    const parsed = Number(normalizedValue)
+
+    return Number.isFinite(parsed) ? parsed : null
+}
+
+const statusReport = computed(() => {
+    const report = store.certificates?.status_report ?? {}
+
+    return {
+        active: Number(report.active ?? 0),
+        updated: Number(report.updated ?? 0),
+        rejected: Number(report.rejected ?? 0),
+        total: Number(report.total ?? 0)
+            || Number(report.active ?? 0) + Number(report.updated ?? 0) + Number(report.rejected ?? 0),
+    }
+})
+
+const statusText = (statusValue) => {
+    const map = {
+        4: { class: 'active', key: 'certificates.statuses.installed' },
+        3: { class: 'history', key: 'certificates.statuses.updated' },
+        2: { class: 'active', key: 'certificates.statuses.pfx_ready' },
+        1: { class: 'active', key: 'certificates.statuses.token_ready' },
+        0: { class: 'error', key: 'certificates.statuses.revoked' },
+    }
+
+    const found = map[statusValue]
+    if (found) return { class: found.class, text: t(found.key) }
+
+    return { class: '', text: String(statusValue ?? '-') }
+}
+
+const tableItems = computed(() => {
+    const rawItems = store.certificates?.all_data?.length
+        ? store.certificates.all_data
+        : (store.certificates?.data ?? [])
+    const statusFilter = normalizeStatusFilter(status.value)
+    const search = String(searchQuery.value ?? '').trim().toLowerCase()
+
+    return rawItems.filter(item => {
+        if (statusFilter !== null && Number(item?.status) !== statusFilter)
+            return false
+
+        if (!search)
+            return true
+
+        const haystack = [
+            item?.cname,
+            item?.token_sn,
+            item?.cert_sn,
+            item?.cert_from,
+            item?.cert_to,
+            statusText(item?.status).text,
+        ]
+            .filter(Boolean)
+            .map(value => String(value).toLowerCase())
+            .join(' ')
+
+        return haystack.includes(search)
+    })
+})
+
+const totalPages = computed(() => {
+    const perPage = Number(options.value.itemsPerPage)
+    if (perPage <= 0)
+        return 1
+
+    return Math.max(1, Math.ceil(tableItems.value.length / perPage))
+})
+
+const paginatedItems = computed(() => {
+    const perPage = Number(options.value.itemsPerPage)
+    if (perPage <= 0)
+        return tableItems.value
+
+    const start = (options.value.page - 1) * perPage
+
+    return tableItems.value.slice(start, start + perPage)
+})
+
 // --- refresh ---
 const refresh = () => {
     load.value = true
-    store.fetchCertificate(options.value.itemsPerPage, options.value.page)
+    store.fetchStatusReport()
         .then(() => {
             load.value = false
         })
@@ -91,36 +180,52 @@ const refresh = () => {
 
 onMounted(() => refresh())
 
-watch(status, (newValue) => {
-    if (newValue !== null && newValue !== undefined) {
-        store.filterCertificate(newValue)
-    } else {
-        refresh()
+watch(status, newValue => {
+    const normalizedStatus = normalizeStatusFilter(newValue)
+    if (newValue !== normalizedStatus) {
+        status.value = normalizedStatus
+        return
     }
+
+    options.value.page = 1
 })
 
-watch(() => options.value.itemsPerPage, () => refresh(), { deep: true })
+watch(searchQuery, () => {
+    options.value.page = 1
+})
+
+watch(() => options.value.itemsPerPage, () => {
+    options.value.page = 1
+})
+
+const onItemsPerPageChange = value => {
+    const normalizedValue = typeof value === 'object' && value !== null
+        ? (value.value ?? value.id ?? value.title ?? value)
+        : value
+
+    const parsed = Number(normalizedValue)
+    if (Number.isFinite(parsed)) {
+        options.value.itemsPerPage = parsed
+        return
+    }
+
+    if (String(normalizedValue).toLowerCase() === 'all')
+        options.value.itemsPerPage = -1
+}
+
+const itemsPerPageOptions = computed(() => [
+    { value: 10, title: '10' },
+    { value: 25, title: '25' },
+    { value: 50, title: '50' },
+    { value: 100, title: '100' },
+    { value: -1, title: t('clients.all') },
+])
 
 // --- helpers ---
 const getRowProps = (item) => {
     if (!item) return {}
     if (item.id === 1) return 'green-row'
     return {}
-}
-
-const statusText = (status) => {
-    const map = {
-        4: { class: 'active',  key: 'certificates.statuses.installed'  },
-        3: { class: 'history', key: 'certificates.statuses.updated'    },
-        2: { class: 'active',  key: 'certificates.statuses.pfx_ready'  },
-        1: { class: 'active',  key: 'certificates.statuses.token_ready'},
-        0: { class: 'error',   key: 'certificates.statuses.revoked'    },
-    }
-
-    const found = map[status]
-    if (found) return { class: found.class, text: t(found.key) }
-
-    return { class: '', text: String(status ?? '-') }
 }
 
 const downloadPDF = async (item) => {
@@ -243,7 +348,8 @@ const downloadPFX = (item) => {
             </VCol>
             <VCol class="d-flex justify-end">
                 <VCol cols="12" sm="6">
-                    <AppTextField :placeholder="$t('search')" density="compact" prepend-inner-icon="tabler-search" />
+                    <AppTextField v-model="searchQuery" :placeholder="$t('search')" density="compact"
+                        prepend-inner-icon="tabler-search" />
                 </VCol>
                 <VCol cols="12" sm="4">
                     <AppSelect
@@ -257,30 +363,33 @@ const downloadPFX = (item) => {
                     />
                 </VCol>
                 <VCol cols="12" sm="5">
-                    <div class="w-100 h-100 border rounded d-flex align-center gap-2 px-4">
-                        <div>{{ $t('clients.all') }}</div>
+                    <div class="w-100 h-100 border rounded d-flex align-center justify-space-between px-4">
+                        <div>
+                            {{ $t('clients.all') }}
+                            <span class="ms-1">{{ statusReport.total }}</span>
+                        </div>
                         <div>
                             <VIcon size="24" icon="tabler-circle-check" color="#28C76F" class="mr-1" />
-                            <span>{{ store.certificates?.status_report?.active || 0 }}</span>
+                            <span>{{ statusReport.active }}</span>
                         </div>
                         <div>
                             <VIcon size="24" icon="tabler-rotate" color="#00BAD1" class="mr-1" />
-                            <span>{{ store.certificates?.status_report?.updated || 0 }}</span>
+                            <span>{{ statusReport.updated }}</span>
+                        </div>
+                        <div>
+                            <VIcon size="24" icon="tabler-circle-x" color="#FF4C51" class="mr-1" />
+                            <span>{{ statusReport.rejected }}</span>
                         </div>
                     </div>
                 </VCol>
                 <VCol col="12">
                     <AppSelect
                         :model-value="options.itemsPerPage"
-                        :items="[
-                          { value: 12, title: '12' },
-                          { value: 25, title: '25' },
-                          { value: 50, title: '50' },
-                          { value: 100, title: '100' },
-                          { value: -1, title: 'All' },
-                        ]"
+                        :items="itemsPerPageOptions"
+                        item-title="title"
+                        item-value="value"
                         style="inline-size: 6.25rem;"
-                        @update:model-value="options.itemsPerPage = parseInt($event, 10)"
+                        @update:model-value="onItemsPerPageChange"
                     />
                 </VCol>
             </VCol>
@@ -288,13 +397,14 @@ const downloadPFX = (item) => {
 
         <VDataTable
             :headers="headers"
-            :items="store.certificates?.data || []"
+            :items="paginatedItems"
+            :items-per-page="-1"
             :loading="load"
             :hover="true"
-            loading-text="Yuklanmoqda"
-            :items-per-page="options.itemsPerPage"
+            :loading-text="$t('common.loading')"
+            hide-default-footer
         >
-            <template #item="{ item, columns }">
+            <template #item="{ item, columns, index }">
                 <tr :class="getRowProps(item)">
                     <td v-for="column in columns" :key="column.key">
 
@@ -379,10 +489,18 @@ const downloadPFX = (item) => {
 <!--                            </VListItemTitle>-->
 <!--                        </template>-->
 
-                        <!-- default -->
-                        <template v-else>
-                            {{ item[column.key] }}
-                        </template>
+                            <!-- default -->
+                            <template v-else-if="column.key === 'id'">
+                                {{
+                                    options.itemsPerPage > 0
+                                        ? (options.page - 1) * options.itemsPerPage + index + 1
+                                        : index + 1
+                                }}
+                            </template>
+
+                            <template v-else>
+                                {{ item[column.key] }}
+                            </template>
 
                     </td>
                 </tr>
@@ -396,11 +514,10 @@ const downloadPFX = (item) => {
                 <VCardText class="pt-2">
                     <div class="d-flex justify-end">
                         <VPagination
-                            v-if="store.certificates?.pagination"
+                            v-if="tableItems.length"
                             v-model="options.page"
                             :total-visible="$vuetify.display.smAndDown ? 3 : 5"
-                            :length="Math.ceil(store.certificates?.pagination?.total / options.itemsPerPage)"
-                            @click="refresh"
+                            :length="totalPages"
                         />
                     </div>
                 </VCardText>

@@ -4,18 +4,18 @@
         <VDialog v-model="props.deleteDialog" max-width="500px">
             <VCard>
                 <VCardTitle>
-                    Are you sure you want to delete this item?
+                    {{ $t('common.delete_confirm') }}
                 </VCardTitle>
 
                 <VCardActions>
                     <VSpacer />
 
                     <VBtn color="error" variant="outlined" @click="emit('closeDelete')">
-                        Cancel
+                        {{ $t('cancel') }}
                     </VBtn>
 
                     <VBtn color="success" variant="elevated" @click="emit('deleteItemConfirm')">
-                        OK
+                        {{ $t('common.ok') }}
                     </VBtn>
 
                     <VSpacer />

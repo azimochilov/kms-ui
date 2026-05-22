@@ -3,7 +3,8 @@ import { useToast } from '@/@core/stores/toastConfig'
 import { useUsers } from '@/@core/stores/users'
 import { useI18n } from 'vue-i18n'
 const changePassword = ref({
-    password: null,
+    old_password: null,
+    new_password: null,
     password_confirmation: null
 })
 const refForm = ref(null)
@@ -79,20 +80,29 @@ const sendPassword = () => {
                     <VRow>
 
                         <VCol cols="12">
-                            <AppTextField v-model="changePassword.password" label="Password" autocomplete="on"
+                            <AppTextField v-model="changePassword.old_password" :label="$t('profile.old_password')" autocomplete="on"
                                 placeholder="············" :type="isPasswordVisible ? 'text' : 'password'"
                                 :append-inner-icon="isPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'"
                                 @click:append-inner="isPasswordVisible = !isPasswordVisible" :requireInput="true"
-                                :rules="[requiredValidator, minLengthValidator(changePassword.password, 8)]" />
+                                :rules="[requiredValidator, minLengthValidator(changePassword.old_password, 8)]" />
                         </VCol>
 
                         <VCol cols="12">
-                            <AppTextField v-model="changePassword.password_confirmation" label="Password"
+                            <AppTextField v-model="changePassword.new_password" :label="$t('profile.new_password')"
                                 placeholder="············" :type="isConfirmPasswordVisible ? 'text' : 'password'"
                                 :append-inner-icon="isConfirmPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'"
                                 @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
                                 :requireInput="true"
-                                :rules="[confirmedValidator(changePassword.password_confirmation, changePassword.password)]" />
+                                :rules="[requiredValidator, minLengthValidator(changePassword.new_password, 8)]" />
+                        </VCol>
+
+                        <VCol cols="12">
+                            <AppTextField v-model="changePassword.password_confirmation" :label="$t('profile.confirm_new_password')"
+                                placeholder="············" :type="isConfirmPasswordVisible ? 'text' : 'password'"
+                                :append-inner-icon="isConfirmPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'"
+                                @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
+                                :requireInput="true"
+                                :rules="[requiredValidator, confirmedValidator(changePassword.password_confirmation, changePassword.new_password)]" />
                         </VCol>
 
 

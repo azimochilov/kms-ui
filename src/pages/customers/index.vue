@@ -243,12 +243,12 @@
             </VRow>
             <VDataTable :headers="headers" :items="store.clients.data || []" :items-per-page="tableItemsPerPage"
                 :loading="load" :hover="true"
-                loading-text="yuklanmoqda">
-                <template #item="{ item }">
+                :loading-text="$t('common.loading')">
+                <template #item="{ item, index }">
                     <tr :class="getRowProps(item)">
                         <td v-for="column in headers" :key="column.key">
 
-                            <slot :name="`item.${column.key}`" :item="item" :index="item.index">
+                            <slot :name="`item.${column.key}`" :item="item" :index="index">
 
 
                                 <!-- actions ustunini alohida chiqarish -->
@@ -262,21 +262,21 @@
                                                         <template #prepend>
                                                             <VIcon icon="tabler-pencil" />
                                                         </template>
-                                                        <VListItemTitle>Edit</VListItemTitle>
+                                                        <VListItemTitle>{{ $t('settingsModule.edit') }}</VListItemTitle>
                                                     </VListItem>
 
                                                     <VListItem @click="deleteUser(item.id)">
                                                         <template #prepend>
                                                             <VIcon icon="tabler-trash" />
                                                         </template>
-                                                        <VListItemTitle>Delete</VListItemTitle>
+                                                        <VListItemTitle>{{ $t('common.delete') }}</VListItemTitle>
                                                     </VListItem>
 
                                                     <VListItem @click="$router.push(`customers/client/${item.id}`)">
                                                         <template #prepend>
                                                             <VIcon icon="tabler-eye" />
                                                         </template>
-                                                        <VListItemTitle>Show</VListItemTitle>
+                                                        <VListItemTitle>{{ $t('common.show') }}</VListItemTitle>
                                                     </VListItem>
                                                 </VList>
                                             </VMenu>
@@ -285,6 +285,14 @@
                                 </template>
 
                                 <!-- boshqa ustunlar uchun oddiy value -->
+                                <template v-else-if="column.key === 'id'">
+                                    {{
+                                        tableItemsPerPage > 0
+                                            ? (options.page - 1) * tableItemsPerPage + index + 1
+                                            : index + 1
+                                    }}
+                                </template>
+
                                 <template v-else>
                                     {{ item[column.key] }}
                                 </template>

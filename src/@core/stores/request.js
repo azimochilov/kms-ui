@@ -7,6 +7,7 @@ export const useRequests = defineStore("request", {
         requestApiPrefix: 'requests/',
         requests: {
             data: [],
+            all_data: [],
             pagination: {
                 total: 0,
             },
@@ -48,27 +49,51 @@ export const useRequests = defineStore("request", {
             }
 
             items.forEach(item => {
-                if (item?.status === 0 || item?.status === 'new')
+                const statusValue = Number(item?.status)
+
+                if (statusValue === 0)
                     report.new += 1
-                else if (item?.status === 1 || item?.status === 'approved')
+                else if (statusValue === 1)
                     report.approved += 1
-                else if (item?.status === 2 || item?.status === 'rejected')
+                else if (statusValue === 2)
                     report.rejected += 1
             })
 
             return report
         },
 
-        normalizeListResponse(res) {
-            const payload = res?.data ?? res?.result ?? res
-            const rawItems = Array.isArray(payload)
-                ? payload
-                : Array.isArray(payload?.results)
-                    ? payload.results
-                    : Array.isArray(payload?.data)
-                        ? payload.data
-                        : []
+        extractRawItems(payload) {
+            if (Array.isArray(payload))
+                return payload
 
+            if (Array.isArray(payload?.results))
+                return payload.results
+
+            if (Array.isArray(payload?.data))
+                return payload.data
+
+            return []
+        },
+
+        parseStatusReport(payload, items) {
+            const backendReport = payload?.status_report ?? payload?.statusReport
+            const report = backendReport && typeof backendReport === 'object'
+                ? {
+                    new: Number(backendReport.new ?? backendReport.pending ?? 0),
+                    approved: Number(backendReport.approved ?? 0),
+                    rejected: Number(backendReport.rejected ?? 0),
+                }
+                : this.buildStatusReport(items)
+
+            report.total = Number(payload?.count ?? items.length)
+
+            return report
+        },
+
+        normalizeListResponse(res, options = {}) {
+            const { updateStatusReport = false } = options
+            const payload = res?.data ?? res?.result ?? res
+            const rawItems = this.extractRawItems(payload)
             const items = rawItems.map((item, index) => this.normalizeRequest(item, index))
             const total = payload?.count
                 ?? payload?.pagination?.total
@@ -79,7 +104,9 @@ export const useRequests = defineStore("request", {
                 pagination: {
                     total,
                 },
-                status_report: payload?.status_report ?? this.buildStatusReport(items),
+                status_report: updateStatusReport
+                    ? this.parseStatusReport(payload, items)
+                    : this.requests.status_report,
             }
         },
 
@@ -105,6 +132,26 @@ export const useRequests = defineStore("request", {
             }
 
             throw lastError
+        },
+
+        async fetchStatusReport() {
+            try {
+                const res = await this.fetchFromAvailableEndpoints({
+                    page_size: 5000,
+                    page: 1,
+                })
+                const payload = res?.data ?? res?.result ?? res
+                const rawItems = this.extractRawItems(payload)
+                const items = rawItems.map((item, index) => this.normalizeRequest(item, index))
+
+                this.requests.all_data = items
+                this.requests.data = items
+                this.requests.pagination.total = Number(payload?.count ?? items.length)
+                this.requests.status_report = this.parseStatusReport(payload, items)
+            }
+            catch {
+                // Keep the previous report if stats request fails.
+            }
         },
 
         async fetchRequest(per_page, page) {
