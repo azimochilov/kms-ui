@@ -27,6 +27,7 @@ const certificateOverview = ref({
   revoked: 0,
   updated: 0,
   imported: 0,
+  ready_for_import: 0,
 })
 const expiringStats = ref({
   expiring_in_7_days: 0,
@@ -114,11 +115,12 @@ const tokenActiveLabels = computed(() => [
   t('dashboard.tokens.inactive'),
 ])
 const certificateKpis = computed(() => [
-  { key: 'total', title: t('dashboard.kpi.total'), value: Number(certificateOverview.value.total || 0), color: 'primary', icon: 'tabler-file-certificate' },
-  { key: 'active', title: t('dashboard.kpi.active'), value: Number(certificateOverview.value.active || 0), color: 'success', icon: 'tabler-circle-check' },
-  { key: 'revoked', title: t('dashboard.kpi.revoked'), value: Number(certificateOverview.value.revoked || 0), color: 'error', icon: 'tabler-circle-x' },
-  { key: 'updated', title: t('dashboard.kpi.updated'), value: Number(certificateOverview.value.updated || 0), color: 'info', icon: 'tabler-refresh' },
-  { key: 'imported', title: t('dashboard.kpi.imported'), value: Number(certificateOverview.value.imported || 0), color: 'warning', icon: 'tabler-download' },
+  { key: 'total',            title: t('dashboard.kpi.total'),            value: Number(certificateOverview.value.total            || 0), color: 'primary',   icon: 'tabler-file-certificate' },
+  { key: 'active',           title: t('dashboard.kpi.active'),           value: Number(certificateOverview.value.active           || 0), color: 'success',   icon: 'tabler-circle-check' },
+  { key: 'ready_for_import', title: t('dashboard.kpi.ready_for_import'), value: Number(certificateOverview.value.ready_for_import || 0), color: 'secondary', icon: 'tabler-package-import' },
+  { key: 'revoked',          title: t('dashboard.kpi.revoked'),          value: Number(certificateOverview.value.revoked          || 0), color: 'error',     icon: 'tabler-circle-x' },
+  { key: 'updated',          title: t('dashboard.kpi.updated'),          value: Number(certificateOverview.value.updated          || 0), color: 'info',      icon: 'tabler-refresh' },
+  { key: 'imported',         title: t('dashboard.kpi.imported'),         value: Number(certificateOverview.value.imported         || 0), color: 'warning',   icon: 'tabler-download' },
 ])
 const hasUrgentRows = computed(() => Array.isArray(expiringStats.value.urgent_list) && expiringStats.value.urgent_list.length > 0)
 const urgentTableOptions = ref({
@@ -336,6 +338,7 @@ async function fetchCertificateOverview() {
       revoked: normalizeNumber(payload.revoked),
       updated: normalizeNumber(payload.updated),
       imported: normalizeNumber(payload.imported),
+      ready_for_import: normalizeNumber(payload.ready_for_import),
     }
   }
   catch (error) {

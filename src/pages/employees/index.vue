@@ -161,9 +161,15 @@ const refresh = () => {
         })
 }
 
+const tableItemsPerPage = computed(() => Number(options.value.itemsPerPage) || 10)
+
 const onItemsPerPageChange = value => {
-    const parsed = Number.parseInt(value, 10)
-    if (!Number.isNaN(parsed) && parsed > 0)
+    const normalizedValue = typeof value === 'object' && value !== null
+        ? (value.value ?? value.id ?? value)
+        : value
+
+    const parsed = Number(normalizedValue)
+    if (Number.isFinite(parsed) && parsed !== 0)
         options.value.itemsPerPage = parsed
 }
 
@@ -246,7 +252,7 @@ watch(() => options.value.itemsPerPage, () => {
             </VCol>
         </VRow>
 
-        <VDataTable :headers="headers" :items="tableItems" :loading="load">
+        <VDataTable :headers="headers" :items="tableItems" :items-per-page="tableItemsPerPage" :loading="load">
 
 
             <template #no-data>

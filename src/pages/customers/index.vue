@@ -65,6 +65,7 @@
         { title: t('clients.subdivision'), key: 'org_unit' },
         { title: t('clients.inn'), key: 'inn' },
         { title: t('settingsModule.branch'), key: 'branch' },
+        { title: t('settingsModule.status'), key: 'status' },
         { title: t('settingsModule.action'), key: 'actions' },
     ])
 
@@ -291,6 +292,16 @@
                                             ? (options.page - 1) * tableItemsPerPage + index + 1
                                             : index + 1
                                     }}
+                                </template>
+
+                                <template v-else-if="column.key === 'status'">
+                                    <VChip
+                                        :color="item.status === 1 ? 'success' : 'error'"
+                                        size="small"
+                                        label
+                                    >
+                                        {{ item.status === 1 ? $t('settingsModule.active') : $t('settingsModule.inactive') }}
+                                    </VChip>
                                 </template>
 
                                 <template v-else>

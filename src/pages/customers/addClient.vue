@@ -14,7 +14,7 @@ const operators = ref([])
 const refForm = ref()
 const serverErrors = ref({})
 
-// --- 1. clientData ---
+// --- clientData ---
 const clientData = ref({
     operator: null,
     cert_type: null,
@@ -22,6 +22,9 @@ const clientData = ref({
     local_code: '',
     cname: '',
     sname: '',
+    accname: '',
+    description: '',
+    job: '',
     fido_user_id: '',
     location: '',
     state: '',
@@ -40,11 +43,14 @@ const clientData = ref({
     file_upload: null,
 })
 
-// --- 2. composable ---
+// --- composable ---
 const { getTokenSN, loading: tokenLoading } = useTokenSN(clientData)
 
 // --- visibility ---
-const showSname       = ref(true)
+const showSname       = ref(false)
+const showAccname     = ref(false)
+const showDesc        = ref(false)
+const showJob         = ref(false)
 const showInn         = ref(false)
 const showPinfl       = ref(false)
 const showTokenFields = ref(true)
@@ -55,21 +61,55 @@ const updateVisibility = () => {
     const tc = Number(clientData.value.type_client)
     const tt = clientData.value.token_type
 
-    const isMobile = [2, 3, 4, 7].includes(ct)
+    const isMobile = [3, 4, 7].includes(ct)   // cert_type=2 (internet banking) mobile emas
     const isIABS   = ct === 1
 
     showTokenFields.value = !isMobile && tt !== 'virtual'
     showTypeClient.value  = !isIABS
 
-    if (isMobile) {
-        showInn.value   = false
-        showPinfl.value = false
-    } else if (isIABS) {
-        showInn.value   = false
-        showPinfl.value = true
+    if (isIABS) {
+        // Пользователь iABS: описание, должность, пинфл — фиксировано
+        showSname.value   = false
+        showAccname.value = false
+        showDesc.value    = true
+        showJob.value     = true
+        showInn.value     = false
+        showPinfl.value   = true
     } else {
-        showInn.value   = tc === 1
-        showPinfl.value = tc === 2
+        // Интернет банкинг + Мобильный: ИНН/ПИНФЛ зависит от типа клиента
+        showSname.value   = true
+        showAccname.value = true
+        showDesc.value    = false
+        showJob.value     = false
+        if (!tc) {
+            // Тип клиента не выбран — показать оба
+            showInn.value   = true
+            showPinfl.value = true
+        } else {
+            showInn.value   = tc === 1   // Юридическое лицо → ИНН
+            showPinfl.value = tc === 2   // Физическое лицо  → ПИНФЛ
+        }
+    }
+}
+
+// --- OU prefix map (совпадает с PHP логикой) ---
+const OU_MAP = {
+    2: 'UZC003',   // mobile iABS
+    1: 'UZB003',   // iABS user
+    3: 'UZC003',   // mobile PFX
+    4: 'UZC003',   // mobile PFX alt
+    7: 'UZM003',   // Metin
+    5: 'UZJ003',   // JOYDA
+    6: 'UZS003',   // CROBS
+}
+
+// Вычисляет org_unit сразу при изменении fido_user_id или cert_type
+const computeOrgUnit = () => {
+    const certType = clientData.value.cert_type
+    const fidoId   = clientData.value.fido_user_id
+    const prefix   = OU_MAP[Number(certType)] ?? ''
+    if (prefix && fidoId) {
+        clientData.value.org_unit = prefix + String(fidoId).padStart(9, '0')
     }
 }
 
@@ -89,57 +129,45 @@ const fetchClientInfo = async () => {
 
         if (isMobile && res?.data?.user) {
             const u = res.data.user
-            clientData.value.cname        = u.fio     ?? clientData.value.cname
-            clientData.value.location     = u.city    ?? clientData.value.location
-            clientData.value.state        = u.region  ?? clientData.value.state
-            clientData.value.country      = u.country ?? clientData.value.country
-            clientData.value.address      = u.address ?? clientData.value.address
-            clientData.value.inn          = u.inn     ?? clientData.value.inn
-            clientData.value.pinfl        = u.pinfl   ?? clientData.value.pinfl
-            clientData.value.phone        = u.phone   ?? clientData.value.phone
+            clientData.value.cname    = u.fio     ?? clientData.value.cname
+            clientData.value.location = u.city    ?? clientData.value.location
+            clientData.value.state    = u.region  ?? clientData.value.state
+            clientData.value.country  = u.country ?? clientData.value.country
+            clientData.value.address  = u.address ?? clientData.value.address
+            clientData.value.inn      = u.inn     ?? clientData.value.inn
+            clientData.value.pinfl    = u.pinfl   ?? clientData.value.pinfl
+            clientData.value.phone    = u.phone   ?? clientData.value.phone
         } else {
-            if (res?.userName)     clientData.value.cname        = clean(res.userName)
-            if (res?.directorName) clientData.value.sname        = clean(res.directorName)
-            if (res?.location)     clientData.value.location     = clean(res.location)
-            if (res?.region)       clientData.value.state        = clean(res.region)
-            if (res?.address)      clientData.value.address      = clean(res.address)
-            if (res?.company)      clientData.value.organisation = clean(res.company)
-            if (res?.country)      clientData.value.country      = res.country
-            if (res?.inn)          clientData.value.inn          = res.inn
-            if (res?.pinfl)        clientData.value.pinfl        = res.pinfl
-            if (res?.mobilePhone)  clientData.value.phone        = res.mobilePhone
-            if (res?.localCode)    clientData.value.local_code   = res.localCode
+            if (res?.userName)      clientData.value.cname        = clean(res.userName)
+            if (res?.directorName)  clientData.value.sname        = clean(res.directorName)
+            if (res?.accounterName) clientData.value.accname      = clean(res.accounterName)
+            if (res?.location)      clientData.value.location     = clean(res.location)
+            if (res?.region)        clientData.value.state        = clean(res.region)
+            if (res?.address)       clientData.value.address      = clean(res.address)
+            if (res?.company)       clientData.value.organisation = clean(res.company)
+            if (res?.country)       clientData.value.country      = res.country
+            if (res?.inn)           clientData.value.inn          = res.inn
+            if (res?.pinfl)         clientData.value.pinfl        = res.pinfl
+            if (res?.mobilePhone)   clientData.value.phone        = res.mobilePhone
+            if (res?.localCode)     clientData.value.local_code   = res.localCode
 
+            // Мобильный банкинг PFX / iABS — имя из login
             if ([3, 2].includes(Number(certType))) {
                 if (res?.login)        clientData.value.cname = clean(res.login)
                 if (res?.directorName) clientData.value.sname = clean(res.directorName)
             }
 
+            // Пользователь iABS — описание и должность из description
             if (isIABS) {
                 if (res?.userName) clientData.value.cname = clean(res.userName)
                 if (res?.description) {
                     const arr = res.description.split(',')
-                    clientData.value.org_unit     = clean((arr[0] ?? '').replace('Департамент:', ''))
+                    clientData.value.description  = clean((arr[0] ?? '').replace('Департамент:', ''))
+                    clientData.value.job          = clean((arr[1] ?? '').replace('Должность:', ''))
                     clientData.value.organisation = clean((arr[1] ?? '').replace('Должность:', ''))
                 }
             }
         }
-
-        // org_unit prefix
-        const ouMap = {
-            2: 'UZC003',
-            1: 'UZB003',
-            3: 'UZC003',
-            4: 'UZC003',
-            7: 'UZM003',
-            5: 'UZJ003',
-            6: 'UZS003',
-        }
-        const prefix = ouMap[Number(certType)] ?? ''
-        if (prefix && fidoId) {
-            clientData.value.org_unit = prefix + String(fidoId).padStart(9, '0')
-        }
-
     } catch (err) {
         console.error('fetchClientInfo error:', err)
     }
@@ -149,17 +177,26 @@ const fetchClientInfo = async () => {
 let infoDebounce = null
 
 watch(() => clientData.value.fido_user_id, () => {
+    computeOrgUnit()
     if (infoDebounce) clearTimeout(infoDebounce)
     infoDebounce = setTimeout(() => fetchClientInfo(), 500)
 })
 
 watch(() => clientData.value.cert_type, () => {
+    computeOrgUnit()
     fetchClientInfo()
     updateVisibility()
 })
 
-watch(() => clientData.value.type_client, () => updateVisibility())
-watch(() => clientData.value.token_type,  () => updateVisibility())
+watch(() => clientData.value.type_client, (newVal) => {
+    // Для физического лица — Location = Address (как в PHP)
+    if (Number(newVal) === 2 && clientData.value.address) {
+        clientData.value.location = clientData.value.address
+    }
+    updateVisibility()
+})
+
+watch(() => clientData.value.token_type, () => updateVisibility())
 
 watch(clientData, (newVal, oldVal) => {
     Object.keys(serverErrors.value).forEach(field => {
@@ -249,7 +286,7 @@ const onSubmit = () => {
 
         const fields = [
             'operator', 'cert_type', 'type_client', 'local_code',
-            'cname', 'sname', 'fido_user_id',
+            'cname', 'sname', 'accname', 'description', 'job', 'fido_user_id',
             'location', 'state', 'country', 'address', 'email',
             'organisation', 'phone', 'org_unit', 'inn', 'pinfl',
             'token_type', 'token_sn', 'csr', 'container',
@@ -367,12 +404,39 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- sname -->
+                <!-- sname — Директор (иб + мобильный) -->
                 <VCol cols="12" md="6" v-if="showSname">
                     <AppTextField
                         v-model="clientData.sname"
                         :label="$t('clients.sname')"
                         :error-messages="serverErrors.sname"
+                    />
+                </VCol>
+
+                <!-- accname — Бухгалтер (иб + мобильный) -->
+                <VCol cols="12" md="6" v-if="showAccname">
+                    <AppTextField
+                        v-model="clientData.accname"
+                        :label="$t('clients.accname')"
+                        :error-messages="serverErrors.accname"
+                    />
+                </VCol>
+
+                <!-- description — Описание/Департамент (iABS) -->
+                <VCol cols="12" md="6" v-if="showDesc">
+                    <AppTextField
+                        v-model="clientData.description"
+                        :label="$t('clients.description')"
+                        :error-messages="serverErrors.description"
+                    />
+                </VCol>
+
+                <!-- job — Должность (iABS) -->
+                <VCol cols="12" md="6" v-if="showJob">
+                    <AppTextField
+                        v-model="clientData.job"
+                        :label="$t('clients.job')"
+                        :error-messages="serverErrors.job"
                     />
                 </VCol>
 
@@ -483,6 +547,7 @@ const typeCert = computed(() => [
                         :error-messages="serverErrors.phone"
                     />
                 </VCol>
+
                 <!-- token_type -->
                 <VCol cols="12" md="6" v-if="showTokenFields">
                     <AppSelect

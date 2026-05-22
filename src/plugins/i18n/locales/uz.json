@@ -64,6 +64,9 @@
     "operator": "Operator",
     "cname": "To'liq ism (CN)",
     "sname": "Direktor ismi",
+    "accname": "Buxgalter FIO",
+    "description": "Tavsif (Departament)",
+    "job": "Lavozim",
     "location": "Shahar",
     "state": "Viloyat",
     "country": "Mamlakat (C)",
@@ -271,6 +274,7 @@
       "revoked": "Bekor qilingan",
       "imported": "Import qilingan",
       "updated": "Yangilangan",
+      "ready_for_import": "Import uchun tayyor",
       "clients": "Mijozlar"
     },
     "cb": {
@@ -329,6 +333,7 @@
     "kpi": {
       "total": "Jami",
       "active": "Faol",
+      "ready_for_import": "Import uchun tayyor",
       "revoked": "Bekor qilingan",
       "updated": "Yangilangan",
       "imported": "Import qilingan",
