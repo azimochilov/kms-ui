@@ -2,7 +2,6 @@
 import { useToast } from '@/@core/stores/toastConfig'
 import { useTokens } from '@/@core/stores/tokens'
 import DeleteDialog from "@/components/DeleteDialog.vue"
-import AddEditToken from '@/components/token/addEditToken.vue'
 import AllocateTokenDialog from '@/components/token/allocateTokenDialog.vue'
 import UploadTokenDialog from '@/components/token/uploadTokenDialog.vue'
 import AssignTokenDialog from '@/components/token/assignTokenDialog.vue'
@@ -23,26 +22,24 @@ const store = useTokens()
 
 // Dialog states
 const deleteDialog = ref(false)
-const isAddEditDrawerOpen = ref(false)
 const isUploadDialogOpen = ref(false)
 const isAllocateDialogOpen = ref(false)
 const isAssignDialogOpen = ref(false)
 
 const itemId = ref(null)
-const updateDataId = ref(null)
 const load = ref(true)
 
 const options = ref({ page: 1, itemsPerPage: 12 })
 
 const filterUsed = ref(null) // null = hammasi, 0 = ishlatilmagan, 1 = ishlatilgan
 
-const headers = [
+const headers = computed(() => [
   { title: '№', key: 'index', sortable: false },
   { title: t('tokenModule.seria_number'), key: 'seria_number' },
   { title: t('tokenModule.is_used'), key: 'is_used' },
-  { title: t('tokenModule.branch_user'), key: 'branch_user' },
+  { title: t('tokenModule.branch_user'), key: 'branch' },
   { title: t('tokenModule.actions'), key: 'actions', sortable: false, align: 'center' },
-]
+])
 
 const refresh = () => {
   load.value = true
@@ -71,16 +68,6 @@ const deleteTokenConfirm = () => {
     .catch(error => {
       storeToast.errorsNotfications(error.response?._data?.errors)
     })
-}
-
-const editToken = (id) => {
-  updateDataId.value = id
-  isAddEditDrawerOpen.value = true
-}
-
-const openAdd = () => {
-  updateDataId.value = null
-  isAddEditDrawerOpen.value = true
 }
 
 watch(filterUsed, () => {
@@ -151,11 +138,6 @@ onMounted(() => {
           {{ $t('tokenModule.upload_csv') }}
         </VBtn>
 
-        <!-- Add token (admin uchun) -->
-        <!-- <VBtn color="primary" @click="openAdd">
-          <VIcon size="18" icon="tabler-plus" class="me-1" />
-          {{ $t('tokenModule.add') }}
-        </VBtn> -->
       </VCol>
     </VRow>
 
@@ -189,34 +171,26 @@ onMounted(() => {
         </VChip>
       </template>
 
-      <!-- Branch user -->
-      <template #item.branch_user="{ item }">
-        <span v-if="item.branch_user">{{ item.branch_user }}</span>
+      <!-- Filial nomi -->
+      <template #item.branch="{ item }">
+        <span v-if="item.branch">{{ item.branch }}</span>
         <span v-else class="text-medium-emphasis">—</span>
       </template>
 
       <!-- Actions -->
       <template #item.actions="{ item }">
         <div class="d-flex justify-center">
-          <VBtn icon variant="text" size="small" color="medium-emphasis">
-            <VIcon size="22" icon="tabler-dots-vertical" />
-            <VMenu activator="parent">
-              <VList density="compact">
-                <VListItem link @click="editToken(item.id)">
-                  <template #prepend>
-                    <VIcon icon="tabler-pencil" size="18" />
-                  </template>
-                  <VListItemTitle>{{ $t('tokenModule.edit') }}</VListItemTitle>
-                </VListItem>
-
-                <VListItem @click="deleteToken(item.id)">
-                  <template #prepend>
-                    <VIcon icon="tabler-trash" size="18" color="error" />
-                  </template>
-                  <VListItemTitle class="text-error">{{ $t('tokenModule.delete') }}</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
+          <VBtn
+            icon
+            variant="text"
+            size="small"
+            color="error"
+            @click="deleteToken(item.id)"
+          >
+            <VIcon icon="tabler-trash" size="20" />
+            <VTooltip activator="parent" location="top">
+              {{ $t('tokenModule.delete') }}
+            </VTooltip>
           </VBtn>
         </div>
       </template>
@@ -237,13 +211,6 @@ onMounted(() => {
       </template>
     </VDataTable>
   </VCard>
-
-  <!-- Add/Edit Drawer -->
-  <AddEditToken
-    v-model:isDrawerOpen="isAddEditDrawerOpen"
-    v-model:update_dataId="updateDataId"
-    @refresh="refresh"
-  />
 
   <!-- Upload CSV Dialog -->
   <UploadTokenDialog

@@ -75,7 +75,7 @@ const statusOptions = computed(() => [
     { value: 0, title: t('settingsModule.inactive') },
 ])
 // headers
-const headers = [
+const headers = computed(() => [
     { title: '№', key: 'id' },
     { title: t('settingsModule.username'), key: 'username' },
     { title: t('settingsModule.full_name'), key: 'full_name' },
@@ -85,7 +85,7 @@ const headers = [
     { title: t('settingsModule.status'), key: 'status' },
     { title: t('settingsModule.mfo'), key: 'mfo' },
     { title: t('settingsModule.action'), key: 'actions' },
-]
+])
 
 
 

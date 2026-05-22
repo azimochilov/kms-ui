@@ -10,6 +10,10 @@ export const useLogs = defineStore("logs", {
                 total: 0,
             },
         },
+        filterOptions: {
+            usernames: [],
+            actions: [],
+        },
     }),
     actions: {
         normalizeLog(item, index = 0) {
@@ -23,6 +27,23 @@ export const useLogs = defineStore("logs", {
                 ip_address: item?.ip_address ?? "-",
                 created_at: item?.created_at ?? null,
             };
+        },
+
+        mergeFilterOptionsFromItems(items) {
+            const usernames = new Set(this.filterOptions.usernames)
+            const actions = new Set(this.filterOptions.actions)
+
+            items.forEach(item => {
+                if (item?.username && item.username !== '-')
+                    usernames.add(item.username)
+                if (item?.action && item.action !== '-')
+                    actions.add(item.action)
+            })
+
+            this.filterOptions = {
+                usernames: [...usernames].sort(),
+                actions: [...actions].sort(),
+            }
         },
 
         normalizeListResponse(res) {
@@ -46,20 +67,23 @@ export const useLogs = defineStore("logs", {
                     total,
                 },
             };
+
+            this.mergeFilterOptionsFromItems(items);
         },
 
-        async fetchFromAvailableEndpoints(query = {}) {
-            const endpoints = [
+        async fetchFromAvailableEndpoints(query = {}, endpoints = null) {
+            const resolvedEndpoints = endpoints ?? [
                 "logs/audit/",
                 "logs/audit",
                 "audit/",
             ];
 
             let lastError = null;
-            for (const endpoint of endpoints) {
+            for (const endpoint of resolvedEndpoints) {
                 try {
                     const res = await $api(endpoint, { query });
-                    this.logsApiPrefix = endpoint;
+                    if (!endpoints)
+                        this.logsApiPrefix = endpoint;
 
                     return res;
                 }
@@ -69,6 +93,27 @@ export const useLogs = defineStore("logs", {
             }
 
             throw lastError;
+        },
+
+        async fetchFilterOptions() {
+            const endpoints = [
+                "logs/audit/filters/",
+                "logs/audit/filters",
+                "audit/filters/",
+            ];
+
+            try {
+                const res = await this.fetchFromAvailableEndpoints({}, endpoints);
+                const payload = res?.data ?? res?.result ?? res;
+
+                this.filterOptions = {
+                    usernames: Array.isArray(payload?.usernames) ? payload.usernames : [],
+                    actions: Array.isArray(payload?.actions) ? payload.actions : [],
+                };
+            }
+            catch {
+                this.filterOptions = { usernames: [], actions: [] };
+            }
         },
 
         async fetchLogs(per_page, page, filters = {}) {
