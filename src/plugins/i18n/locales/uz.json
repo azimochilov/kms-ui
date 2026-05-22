@@ -189,7 +189,7 @@
     "filter": "Filter",
     "seria_number": "Seriya raqami",
     "is_used": "Holati",
-    "branch_user": "Branch",
+    "branch_user": "Filial",
     "actions": "Amallar",
     "used": "Ishlatilgan",
     "not_used": "Ishlatilmagan",
@@ -229,6 +229,9 @@
     "created_at": "Sana",
     "date_from": "Sana dan",
     "date_to": "Sana gacha",
+    "all_users": "Barcha foydalanuvchilar",
+    "all_actions": "Barcha amallar",
+    "per_page": "Sahifada",
     "clear": "Tozalash",
     "admin_only": "Loglar faqat administrator uchun mavjud"
   },

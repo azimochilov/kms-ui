@@ -27,6 +27,22 @@ const filters = ref({
 const dateFromInputType = ref('text')
 const dateToInputType = ref('text')
 
+const usernameFilterItems = computed(() => [
+  { title: t('logs.all_users'), value: '' },
+  ...store.filterOptions.usernames.map(username => ({
+    title: username,
+    value: username,
+  })),
+])
+
+const actionFilterItems = computed(() => [
+  { title: t('logs.all_actions'), value: '' },
+  ...store.filterOptions.actions.map(action => ({
+    title: action,
+    value: action,
+  })),
+])
+
 const headers = computed(() => [
   { title: '№', key: 'id' },
   { title: t('logs.username'), key: 'username' },
@@ -142,7 +158,8 @@ watch(() => options.value.itemsPerPage, () => {
   goFirstPageAndRefresh()
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await store.fetchFilterOptions()
   refresh()
 })
 </script>
@@ -157,79 +174,101 @@ onMounted(() => {
       </VCol>
     </VRow>
 
-    <VRow class="px-4 pb-4 logs-filters-row">
-      <VCol cols="12" sm="6" md="4">
-        <AppTextField
-          v-model="filters.search"
-          :placeholder="$t('search')"
-          density="compact"
-          prepend-inner-icon="tabler-search"
-        />
-      </VCol>
+    <div class="px-4 pb-4 logs-filters">
+      <VRow class="logs-filters__row" align="end">
+        <VCol cols="12" md="4">
+          <AppTextField
+            v-model="filters.search"
+            class="w-100"
+            :placeholder="$t('search')"
+            density="compact"
+            prepend-inner-icon="tabler-search"
+            hide-details
+          />
+        </VCol>
 
-      <VCol cols="12" sm="6" md="3">
-        <AppTextField
-          v-model="filters.username"
-          :placeholder="$t('logs.username')"
-          density="compact"
-        />
-      </VCol>
+        <VCol cols="12" sm="6" md="3">
+          <AppSelect
+            v-model="filters.username"
+            class="w-100"
+            :items="usernameFilterItems"
+            item-title="title"
+            item-value="value"
+            :label="$t('logs.username')"
+            density="compact"
+            clearable
+            hide-details
+          />
+        </VCol>
 
-      <VCol cols="12" sm="6" md="3">
-        <AppTextField
-          v-model="filters.action"
-          :placeholder="$t('logs.action')"
-          density="compact"
-        />
-      </VCol>
+        <VCol cols="12" sm="6" md="3">
+          <AppSelect
+            v-model="filters.action"
+            class="w-100"
+            :items="actionFilterItems"
+            item-title="title"
+            item-value="value"
+            :label="$t('logs.action')"
+            density="compact"
+            clearable
+            hide-details
+          />
+        </VCol>
 
-      <VCol cols="12" sm="6" md="2" class="logs-page-size-col">
-        <AppSelect
-          :model-value="options.itemsPerPage"
-          :items="[
-            { value: 10, title: '10' },
-            { value: 25, title: '25' },
-            { value: 50, title: '50' },
-            { value: 100, title: '100' },
-          ]"
-          hide-details
-          class="logs-page-size-select"
-          @update:model-value="options.itemsPerPage = parseInt($event, 10)"
-        />
-      </VCol>
+        <VCol cols="12" sm="6" md="2">
+          <AppSelect
+            :model-value="options.itemsPerPage"
+            class="w-100"
+            :items="[
+              { value: 10, title: '10' },
+              { value: 25, title: '25' },
+              { value: 50, title: '50' },
+              { value: 100, title: '100' },
+            ]"
+            :label="$t('logs.per_page')"
+            density="compact"
+            hide-details
+            @update:model-value="options.itemsPerPage = parseInt($event, 10)"
+          />
+        </VCol>
+      </VRow>
 
-      <VCol cols="12" sm="6" md="4">
-        <AppTextField
-          v-model="filters.date_from"
-          :placeholder="$t('logs.date_from')"
-          :type="dateFromInputType"
-          density="compact"
-          prepend-inner-icon="tabler-calendar"
-          @focus="dateFromInputType = 'date'"
-          @blur="handleDateFromBlur"
-        />
-      </VCol>
+      <VRow class="logs-filters__row logs-filters__row--secondary" align="end">
+        <VCol cols="12" sm="6" md="3">
+          <AppTextField
+            v-model="filters.date_from"
+            class="w-100"
+            :label="$t('logs.date_from')"
+            :type="dateFromInputType"
+            density="compact"
+            prepend-inner-icon="tabler-calendar"
+            hide-details
+            @focus="dateFromInputType = 'date'"
+            @blur="handleDateFromBlur"
+          />
+        </VCol>
 
-      <VCol cols="12" sm="6" md="4">
-        <AppTextField
-          v-model="filters.date_to"
-          :placeholder="$t('logs.date_to')"
-          :type="dateToInputType"
-          density="compact"
-          prepend-inner-icon="tabler-calendar"
-          @focus="dateToInputType = 'date'"
-          @blur="handleDateToBlur"
-        />
-      </VCol>
+        <VCol cols="12" sm="6" md="3">
+          <AppTextField
+            v-model="filters.date_to"
+            class="w-100"
+            :label="$t('logs.date_to')"
+            :type="dateToInputType"
+            density="compact"
+            prepend-inner-icon="tabler-calendar"
+            hide-details
+            @focus="dateToInputType = 'date'"
+            @blur="handleDateToBlur"
+          />
+        </VCol>
 
-      <VCol cols="12" md="2" class="d-none d-md-block" />
-
-      <VCol cols="12" sm="6" md="2" class="logs-clear-col">
-        <VBtn class="logs-clear-btn" block @click="clearFilters">
-          {{ $t('logs.clear') }}
-        </VBtn>
-      </VCol>
-    </VRow>
+        <VCol cols="12" md="6" class="logs-filters__actions">
+          <VBtn class="logs-clear-btn" @click="clearFilters">
+            {{ $t('logs.clear') }}
+          </VBtn>
+        </VCol>
+      </VRow>
+    </div>
 
     <VDataTable
       :headers="headers"
@@ -278,22 +317,22 @@ onMounted(() => {
   background-color: #f3f2f3;
 }
 
-.logs-filters-row {
-  row-gap: 6px;
+.logs-filters__row {
+  margin: 0;
 }
 
-.logs-clear-col {
-  display: flex;
-  align-items: flex-end;
+.logs-filters__row--secondary {
+  margin-top: 12px;
 }
 
-.logs-page-size-col {
+.logs-filters__actions {
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
 }
 
 .logs-clear-btn {
+  min-inline-size: 140px;
   min-block-size: 40px;
   border: 1px solid rgba(124, 107, 255, 0.32);
   background: linear-gradient(135deg, #7c6bff 0%, #9c8ff9 100%);
@@ -305,18 +344,12 @@ onMounted(() => {
   background: linear-gradient(135deg, #705dff 0%, #9183f7 100%);
 }
 
-.logs-page-size-select {
-  inline-size: 110px;
-}
-
 @media (max-width: 959px) {
-  .logs-clear-col,
-  .logs-page-size-col {
-    align-items: stretch;
+  .logs-filters__actions {
     justify-content: stretch;
   }
 
-  .logs-page-size-select {
+  .logs-clear-btn {
     inline-size: 100%;
   }
 }

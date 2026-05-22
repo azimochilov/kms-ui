@@ -8,6 +8,24 @@ export const useTokens = defineStore("tokens", {
   }),
 
   actions: {
+    normalizeToken(item) {
+      const branchUser = item?.branch_user
+      const branchUserId = typeof branchUser === 'number'
+        ? branchUser
+        : branchUser?.id ?? item?.branch_user_id ?? null
+      const branchName = (item?.branch
+        ?? (typeof branchUser === 'object' && branchUser ? branchUser.branch : null)
+        ?? '')
+        .toString()
+        .trim()
+
+      return {
+        ...item,
+        branch_user_id: branchUserId,
+        branch: branchName,
+      }
+    },
+
     // Tokenlar ro'yxatini olish (admin: hammasi, branch: o'zinikini)
     async fetchTokens(per_page = 12, page = 1, filters = {}) {
       const params = new URLSearchParams({
@@ -17,8 +35,9 @@ export const useTokens = defineStore("tokens", {
       }).toString();
 
       return await $api(`tokens/?${params}`).then((res) => {
+        const rawItems = res.results ?? res.data ?? []
         this.tokens = {
-          data: res.results,
+          data: rawItems.map(item => this.normalizeToken(item)),
           pagination: { total: res.count },
         };
       });
@@ -28,14 +47,6 @@ export const useTokens = defineStore("tokens", {
     async createToken(data) {
       return await $api("tokens/", {
         method: "POST",
-        body: data,
-      });
-    },
-
-    // Tokenni tahrirlash (faqat admin)
-    async updateToken(id, data) {
-      return await $api(`tokens/${id}/`, {
-        method: "PUT",
         body: data,
       });
     },
