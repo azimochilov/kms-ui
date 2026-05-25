@@ -257,36 +257,36 @@ const onReissued = () => {
 }
 
 // Tokenga yozish — WebSocket orqali
-const writeToToken = async (item) => {
+const writeToToken = (item) => {
     const ws = new WebSocket('ws://localhost:8181')
 
-    let response = await $api('')
-
     ws.onopen = () => {
-        const msg = JSON.stringify({
+        // smartcard uchun base64, boshqa qurilmalar uchun pfx
+        const certData = item.device_type === 'smartcard' ? item.base64 : item.pfx
+
+        ws.send(JSON.stringify({
             function: 'importCert',
-            token_sn: item.token_sn,           // jadvalda device_id_number
-            obj: item.public_key,              // base64 sertifikat
-            token_type: item.device_type,      // platform (android/ios/windows...)
-        })
-        ws.send(msg)
+            token_sn: item.token_sn,
+            obj: certData,
+            token_type: item.device_type,
+        }))
     }
 
-    ws.onmessage = (evt) => {
+    ws.onmessage = async (evt) => {
         const res = JSON.parse(evt.data)
         if (res.status === 'success') {
-            // Django endpointga POST — sertifikat tokenga yozildi deb belgilash
-            axios.post(`/api/certificates/set_cert_active/`, {
-                cert_sn: item.cert_sn
-            }).then(() => {
-                toast.success($t('certificates.messages.written_to_token'))
-                fetchCertificates()   // jadval refresh
-            })
+            try {
+                await $api(`certificates/imported/${item.cert_sn}/`, { method: 'POST' })
+                storetoast.successToast($t('certificates.messages.written_to_token'))
+                setSopin(item)
+            } catch {
+                storetoast.errorToast($t('certificates.messages.ws_error'))
+            }
         } else {
             if (res.comments === 'check cert') {
-                toast.error($t('certificates.messages.must_be_revoked'))
+                storetoast.errorToast($t('certificates.messages.must_be_revoked'))
             } else {
-                toast.error(res.comments)
+                storetoast.errorToast(res.comments)
             }
         }
     }
@@ -295,16 +295,68 @@ const writeToToken = async (item) => {
         console.warn('WebSocket connection closed')
     }
 
-    ws.onerror = (err) => {
-        console.error('WebSocket error:', err)
-        toast.error($t('certificates.messages.ws_error'))
+    ws.onerror = () => {
+        storetoast.errorToast($t('certificates.messages.ws_error'))
     }
 }
 
-// PFX yuklab olish — Django endpoint orqali
-const downloadPFX = (item) => {
-    const filename = item.cert_sn + item.cname?.replace(/ /g, '_')
-    window.open(`/api/certificates/${filename}/`, '_blank')
+// Token parolini o'rnatish — tokenga yozilgandan keyin avtomatik chaqiriladi
+const setSopin = (item) => {
+    const ws = new WebSocket('ws://localhost:8181')
+
+    ws.onopen = () => {
+        ws.send(JSON.stringify({
+            function: 'setSopin',
+            token_sn: item.token_sn,
+            cert_sn: item.cert_sn,
+        }))
+    }
+
+    ws.onmessage = async (evt) => {
+        const res = JSON.parse(evt.data)
+        if (res.status === 'success') {
+            try {
+                await $api('certificates/set-token-password/', {
+                    method: 'POST',
+                    body: { cert_sn: item.cert_sn, password: res.password },
+                })
+            } catch (err) {
+                console.error('set-token-password error:', err)
+            }
+        } else {
+            storetoast.errorToast(res.comments)
+        }
+        refresh()
+    }
+
+    ws.onerror = () => {
+        storetoast.errorToast($t('certificates.messages.ws_error'))
+        refresh()
+    }
+}
+
+// PFX yuklab olish — backenddan base64 olib, fayl sifatida yuklab olish
+const downloadPFX = async (item) => {
+    try {
+        const res = await $api(`certificates/${item.cert_sn}/`)
+        const pfxBase64 = res?.data?.pfx
+
+        if (!pfxBase64) {
+            storetoast.errorToast($t('certificates.messages.pfx_not_found'))
+            return
+        }
+
+        const bytes = Uint8Array.from(atob(pfxBase64), c => c.charCodeAt(0))
+        const blob = new Blob([bytes], { type: 'application/x-pkcs12' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${item.cert_sn}.pfx`
+        a.click()
+        URL.revokeObjectURL(url)
+    } catch {
+        storetoast.errorToast($t('certificates.messages.ws_error'))
+    }
 }
 
 // const updateItem = async (item) => {
@@ -415,9 +467,9 @@ const downloadPFX = (item) => {
                                     <VIcon size="24" icon="tabler-dots-vertical" />
                                     <VMenu activator="parent">
                                         <VList>
-                                            <!-- Tokenga yozish — faqat status == 1 da ko'rinadi -->
+                                            <!-- Tokenga yozish — status=1 (READY_TO_WRITE) va cng=1 (OzDST) -->
                                             <VListItem
-                                                v-if="item.status == 1"
+                                                v-if="item.status == 1 && item.cng == 1"
                                                 @click="writeToToken(item)"
                                             >
                                                 <template #prepend>
@@ -426,9 +478,9 @@ const downloadPFX = (item) => {
                                                 <VListItemTitle>{{ $t('certificates.actions.write_to_token') }}</VListItemTitle>
                                             </VListItem>
 
-                                            <!-- PFX yuklab olish — faqat status == 2 da ko'rinadi -->
+                                            <!-- PFX yuklab olish — status=2 (READY_TO_INSTALL) yoki cng=0 (RSA) -->
                                             <VListItem
-                                                v-if="item.status == 2"
+                                                v-if="item.status == 2 || item.cng == 0"
                                                 @click="downloadPFX(item)"
                                             >
                                                 <template #prepend>
