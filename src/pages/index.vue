@@ -8,7 +8,7 @@ const { t } = useI18n()
 definePage({
   meta: {
     action: 'read',
-    subject: 'all',
+    subject: 'member',
   },
 })
 

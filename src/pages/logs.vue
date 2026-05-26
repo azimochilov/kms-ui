@@ -9,7 +9,7 @@ const { t } = useI18n()
 definePage({
   meta: {
     action: 'read',
-    subject: 'admin',
+    subject: 'admin-only',
   },
 })
 

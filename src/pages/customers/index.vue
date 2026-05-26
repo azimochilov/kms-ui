@@ -14,7 +14,7 @@
     definePage({
         meta: {
             action: 'read',
-            subject: 'branch',
+            subject: 'member',
         }
     })
 

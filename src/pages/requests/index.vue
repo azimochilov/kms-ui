@@ -13,7 +13,7 @@ const { t } = useI18n()
 definePage({
     meta: {
         action: 'read',
-        subject: 'branch',
+        subject: 'staff',
     }
 })
 
