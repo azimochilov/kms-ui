@@ -257,13 +257,25 @@ const onReissued = () => {
 }
 
 // Tokenga yozish — WebSocket orqali
-const writeToToken = (item) => {
+const writeToToken = async (item) => {
+    let certData
+    try {
+        const res = await $api(`certificates/${item.cert_sn}/`)
+        const data = res?.data ?? res
+        certData = item.device_type === 'smartcard' ? data.base64 : data.pfx
+    } catch {
+        storetoast.errorToast(t('certificates.messages.ws_error'))
+        return
+    }
+
+    if (!certData) {
+        storetoast.errorToast(t('certificates.messages.pfx_not_found'))
+        return
+    }
+
     const ws = new WebSocket('ws://localhost:8181')
 
     ws.onopen = () => {
-        // smartcard uchun base64, boshqa qurilmalar uchun pfx
-        const certData = item.device_type === 'smartcard' ? item.base64 : item.pfx
-
         ws.send(JSON.stringify({
             function: 'importCert',
             token_sn: item.token_sn,
@@ -277,14 +289,14 @@ const writeToToken = (item) => {
         if (res.status === 'success') {
             try {
                 await $api(`certificates/imported/${item.cert_sn}/`, { method: 'POST' })
-                storetoast.successToast($t('certificates.messages.written_to_token'))
+                storetoast.successToast(t('certificates.messages.written_to_token'))
                 setSopin(item)
             } catch {
-                storetoast.errorToast($t('certificates.messages.ws_error'))
+                storetoast.errorToast(t('certificates.messages.ws_error'))
             }
         } else {
             if (res.comments === 'check cert') {
-                storetoast.errorToast($t('certificates.messages.must_be_revoked'))
+                storetoast.errorToast(t('certificates.messages.must_be_revoked'))
             } else {
                 storetoast.errorToast(res.comments)
             }
@@ -296,7 +308,7 @@ const writeToToken = (item) => {
     }
 
     ws.onerror = () => {
-        storetoast.errorToast($t('certificates.messages.ws_error'))
+        storetoast.errorToast(t('certificates.messages.ws_error'))
     }
 }
 
@@ -330,32 +342,47 @@ const setSopin = (item) => {
     }
 
     ws.onerror = () => {
-        storetoast.errorToast($t('certificates.messages.ws_error'))
+        storetoast.errorToast(t('certificates.messages.ws_error'))
         refresh()
     }
 }
 
-// PFX yuklab olish — backenddan base64 olib, fayl sifatida yuklab olish
+// PFX yuklab olish — API dan olib yuklab olish
 const downloadPFX = async (item) => {
     try {
         const res = await $api(`certificates/${item.cert_sn}/`)
-        const pfxBase64 = res?.data?.pfx
+        let pfxData = res?.data?.pfx ?? res?.pfx ?? res?.result?.pfx
 
-        if (!pfxBase64) {
-            storetoast.errorToast($t('certificates.messages.pfx_not_found'))
+        if (!pfxData) {
+            storetoast.errorToast(t('certificates.messages.pfx_not_found'))
             return
         }
 
-        const bytes = Uint8Array.from(atob(pfxBase64), c => c.charCodeAt(0))
-        const blob = new Blob([bytes], { type: 'application/x-pkcs12' })
-        const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
-        a.href = url
         a.download = `${item.cert_sn}.pfx`
-        a.click()
-        URL.revokeObjectURL(url)
+
+        // pfxData URL bo'lsa — to'g'ridan-to'g'ri yuklab olish
+        if (typeof pfxData === 'string' && (pfxData.startsWith('http://') || pfxData.startsWith('https://'))) {
+            a.href = pfxData
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+        } else {
+            // pfxData base64 bo'lsa — blob yaratib yuklab olish
+            const bytes = Uint8Array.from(atob(String(pfxData)), c => c.charCodeAt(0))
+            const blob = new Blob([bytes], { type: 'application/x-pkcs12' })
+            const url = URL.createObjectURL(blob)
+            a.href = url
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            setTimeout(() => URL.revokeObjectURL(url), 1000)
+        }
+
+        await $api(`certificates/imported/${item.cert_sn}/`, { method: 'POST' })
+        refresh()
     } catch {
-        storetoast.errorToast($t('certificates.messages.ws_error'))
+        storetoast.errorToast(t('certificates.messages.ws_error'))
     }
 }
 
@@ -467,9 +494,9 @@ const downloadPFX = async (item) => {
                                     <VIcon size="24" icon="tabler-dots-vertical" />
                                     <VMenu activator="parent">
                                         <VList>
-                                            <!-- Tokenga yozish — status=1 (READY_TO_WRITE) va cng=1 (OzDST) -->
+                                            <!-- Tokenga yozish — status=1 (READY_TO_WRITE) -->
                                             <VListItem
-                                                v-if="item.status == 1 && item.cng == 1"
+                                                v-if="item.status == 1"
                                                 @click="writeToToken(item)"
                                             >
                                                 <template #prepend>
