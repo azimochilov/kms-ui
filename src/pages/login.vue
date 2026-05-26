@@ -109,8 +109,7 @@ const login = () => {
     })
 
   }).catch(error => {
-    const message = error?.response?._data?.message ?? error?.message ?? t('error')
-    store.errorToast(message)
+    store.apiErrorToast(error, t('error'))
   })
 }
 

@@ -1,40 +1,37 @@
 import { defineStore } from "pinia";
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { parseApiError } from '@/utils/parseApiError';
 
 export const useToast = defineStore("toast", {
-
     state: () => ({
-        loginToast: false
-
+        loginToast: false,
     }),
     actions: {
-        // notificaton
         successToast(text) {
-            toast.success(text, {
-                autoClose: 3000,
-            }) // ToastOptions
+            toast.success(text, { autoClose: 3000 })
         },
 
-        errorToast(errorData) {
-            toast.error(errorData, {
-                autoClose: 7000,
-            }) // ToastOptions
+        // Oddiy string xabar uchun
+        errorToast(message) {
+            toast.error(String(message ?? 'Xatolik yuz berdi'), { autoClose: 7000 })
         },
 
-        errorsNotfications(data) {
-            let dataObject = Object.keys(data)
-
-            dataObject.forEach(item => {
-                data[item].forEach(elemet => {
-                    this.errorToast(elemet)
-
-                })
+        // API / fetch error objecti uchun — avtomatik parse qiladi
+        apiErrorToast(error, fallback) {
+            const messages = parseApiError(error, fallback)
+            messages.forEach(msg => {
+                toast.error(msg, { autoClose: 7000 })
             })
-        }
+        },
 
-
-
-
-    }
+        // Eski backward-compat (ba'zi joylarda ishlatilgan)
+        errorsNotfications(data) {
+            if (!data || typeof data !== 'object') return
+            Object.values(data).forEach(errors => {
+                const list = Array.isArray(errors) ? errors : [errors]
+                list.forEach(msg => this.errorToast(String(msg)))
+            })
+        },
+    },
 })
