@@ -3,6 +3,7 @@ import { useToast } from '@/@core/stores/toastConfig';
 import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?raw';
 import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?raw';
 import { getRulesForRole } from '@/plugins/casl/ability';
+import { $api } from '@/utils/api';
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer';
 import { themeConfig } from '@themeConfig';
 import { nextTick } from 'vue';
