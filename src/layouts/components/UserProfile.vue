@@ -1,6 +1,7 @@
 <script setup>
 import avatar1 from '@images/avatars/avatar-1.png'
 const { t } = useI18n()
+const router = useRouter()
 
 const userCookie = useCookie('userData')
 const profile = ref(userCookie.value || {})
@@ -33,11 +34,11 @@ onMounted(() => {
 })
 
 const logout = () => {
-  // cooke storeoge remove 
   useCookie('userAbilityRules').value = null
   useCookie('userData').value = null
   useCookie('accessToken').value = null
-
+  localStorage.removeItem('userRole')
+  router.replace('/login')
 }
 </script>
 
@@ -90,12 +91,12 @@ const logout = () => {
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem to="/login">
+          <VListItem @click="logout">
             <template #prepend>
               <VIcon class="me-2" icon="tabler-logout" size="22" />
             </template>
 
-            <VListItemTitle @click="logout">{{ t('profile_menu.logout') }}</VListItemTitle>
+            <VListItemTitle>{{ t('profile_menu.logout') }}</VListItemTitle>
           </VListItem>
         </VList>
       </VMenu>
