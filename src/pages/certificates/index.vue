@@ -1,4 +1,5 @@
 <script setup>
+import { $api } from "@/utils/api";
 import { useCertificate } from '@/@core/stores/certicate'
 import { useToast } from '@/@core/stores/toastConfig'
 import EditClient from '@/components/clients/EditClient.vue'
@@ -259,14 +260,18 @@ const onReissued = () => {
 // Tokenga yozish — WebSocket orqali
 const writeToToken = async (item) => {
     let certData
-    try {
+    //try {
         const res = await $api(`certificates/${item.cert_sn}/`)
+        console.log(res)
+        
         const data = res?.data ?? res
         certData = item.device_type === 'smartcard' ? data.base64 : data.pfx
-    } catch {
-        storetoast.errorToast(t('certificates.messages.ws_error'))
-        return
-    }
+    //} catch {
+    
+    	console.log(item)
+        //storetoast.errorToast(t('certificates.messages.ws_error'))
+        //return
+    //}
 
     if (!certData) {
         storetoast.errorToast(t('certificates.messages.pfx_not_found'))
@@ -505,7 +510,7 @@ const downloadPFX = async (item) => {
                                                 <VListItemTitle>{{ $t('certificates.actions.write_to_token') }}</VListItemTitle>
                                             </VListItem>
 
-                                            <!-- PFX yuklab olish — status=2 (READY_TO_INSTALL) yoki cng=0 (RSA) -->
+                                            <!-- PFX yuklab olish  status=2 (READY_TO_INSTALL) yoki cng=0 (RSA) -->
                                             <VListItem
                                                 v-if="item.status == 2 || item.cng == 0"
                                                 @click="downloadPFX(item)"

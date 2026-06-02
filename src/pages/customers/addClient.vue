@@ -68,7 +68,7 @@ const updateVisibility = () => {
     showTypeClient.value  = !isIABS
 
     if (isIABS) {
-        // Пользователь iABS: описание, должность, пинфл — фиксировано
+        // Пользоват iABS: описание, должность, пинфл — исировано
         showSname.value   = false
         showAccname.value = false
         showDesc.value    = true
@@ -76,18 +76,18 @@ const updateVisibility = () => {
         showInn.value     = false
         showPinfl.value   = true
     } else {
-        // Интернет банкинг + Мобильный: ИНН/ПИНФЛ зависит от типа клиента
+        // Интрет банкинг + Моилный: ИНН/ПИНФЛ заисит от типа клиента
         showSname.value   = true
         showAccname.value = true
         showDesc.value    = false
         showJob.value     = false
         if (!tc) {
-            // Тип клиента не выбран — показать оба
+            // Тип клиента не выбран — поазать оба
             showInn.value   = true
             showPinfl.value = true
         } else {
             showInn.value   = tc === 1   // Юридическое лицо → ИНН
-            showPinfl.value = tc === 2   // Физическое лицо  → ПИНФЛ
+            showPinfl.value = tc === 2   // Физичекое лицо   ПИНФЛ
         }
     }
 }
@@ -103,7 +103,7 @@ const OU_MAP = {
     6: 'UZS003',   // CROBS
 }
 
-// Вычисляет org_unit сразу при изменении fido_user_id или cert_type
+// Вычиляет org_unit разу при измнени fido_user_id ли cert_type
 const computeOrgUnit = () => {
     const certType = clientData.value.cert_type
     const fidoId   = clientData.value.fido_user_id
@@ -130,6 +130,7 @@ const fetchClientInfo = async () => {
         if (isMobile && res?.data?.user) {
             const u = res.data.user
             clientData.value.cname    = u.fio     ?? clientData.value.cname
+            clientData.value.email    = u.email   ?? clientData.value.email
             clientData.value.location = u.city    ?? clientData.value.location
             clientData.value.state    = u.region  ?? clientData.value.state
             clientData.value.country  = u.country ?? clientData.value.country
@@ -140,6 +141,7 @@ const fetchClientInfo = async () => {
         } else {
             if (res?.userName)      clientData.value.cname        = clean(res.userName)
             if (res?.directorName)  clientData.value.sname        = clean(res.directorName)
+            if (res?.email)  		clientData.value.email        = res.email
             if (res?.accounterName) clientData.value.accname      = clean(res.accounterName)
             if (res?.location)      clientData.value.location     = clean(res.location)
             if (res?.region)        clientData.value.state        = clean(res.region)
@@ -157,13 +159,13 @@ const fetchClientInfo = async () => {
                 if (res?.directorName) clientData.value.sname = clean(res.directorName)
             }
 
-            // Пользователь iABS — описание и должность из description
+            // Ползотель iABS — опиаие и должность из description
             if (isIABS) {
                 if (res?.userName) clientData.value.cname = clean(res.userName)
                 if (res?.description) {
                     const arr = res.description.split(',')
                     clientData.value.description  = clean((arr[0] ?? '').replace('Департамент:', ''))
-                    clientData.value.job          = clean((arr[1] ?? '').replace('Должность:', ''))
+                    clientData.value.job          = clean((arr[1] ?? '').replace('лжноть:', ''))
                     clientData.value.organisation = clean((arr[1] ?? '').replace('Должность:', ''))
                 }
             }
@@ -189,7 +191,7 @@ watch(() => clientData.value.cert_type, () => {
 })
 
 watch(() => clientData.value.type_client, (newVal) => {
-    // Для физического лица — Location = Address (как в PHP)
+    // Для физческого лица — Location = Address (ка в PHP)
     if (Number(newVal) === 2 && clientData.value.address) {
         clientData.value.location = clientData.value.address
     }
@@ -404,7 +406,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- sname — Директор (иб + мобильный) -->
+                <!-- sname  Директор (б + мобильный) -->
                 <VCol cols="12" md="6" v-if="showSname">
                     <AppTextField
                         v-model="clientData.sname"
@@ -413,7 +415,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- accname — Бухгалтер (иб + мобильный) -->
+                <!-- accname  Бухгалтр (иб + мобильный) -->
                 <VCol cols="12" md="6" v-if="showAccname">
                     <AppTextField
                         v-model="clientData.accname"
@@ -422,7 +424,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- description — Описание/Департамент (iABS) -->
+                <!-- description — Оисание/Департамент (iABS) -->
                 <VCol cols="12" md="6" v-if="showDesc">
                     <AppTextField
                         v-model="clientData.description"
