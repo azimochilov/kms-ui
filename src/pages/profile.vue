@@ -1,5 +1,6 @@
 <script setup>
 import { useToast } from '@/@core/stores/toastConfig'
+import { $api } from '@/utils/api'
 import avatar1 from '@images/avatars/avatar-1.png'
 
 definePage({

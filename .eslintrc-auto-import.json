@@ -361,6 +361,7 @@
     "useAbility": true,
     "maxLengthValidator": true,
     "minLengthValidator": true,
-    "useTokenSN": true
+    "useTokenSN": true,
+    "parseApiError": true
   }
 }

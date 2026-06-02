@@ -1,5 +1,6 @@
 <script setup>
 import avatar1 from '@images/avatars/avatar-1.png'
+import { $api } from '@/utils/api'
 const { t } = useI18n()
 const router = useRouter()
 
