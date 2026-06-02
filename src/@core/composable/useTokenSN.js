@@ -21,22 +21,28 @@ export const useTokenSN = (clientData) => {
 
     const buildPayload = (tokenType) => {
         const d = clientData.value
-        const required = [d.cname, d.location, d.state, d.country, d.address, d.email, d.organisation, d.org_unit]
-        if (required.some(v => !v)) return null
+        const isBst = tokenType === 'BST' || tokenType === 'smartcard'
 
-        if (tokenType === 'BST') {
+        const required = [d.cname, d.location, d.state, d.country, d.address, d.email, d.organisation, d.org_unit]
+        if (isBst && required.some(v => !v)) return null
+
+        if (isBst) {
+            // Keep the request shape aligned with legacy branch_add_client.php,
+            // because the local websocket service relies on these exact keys.
             return {
                 function: 'getTokenSN',
-                type: 'BST',
+                token_type: 'BAIK',
                 subject: {
-                    Email:    d.email,
-                    CN:       cyrillicToLatin(d.cname),
-                    OrgUnit:  d.org_unit,
-                    Org:      cyrillicToLatin(d.organisation),
-                    Address:  cyrillicToLatin(d.address),
-                    Locality: cyrillicToLatin(d.location),
-                    State:    cyrillicToLatin(d.state),
-                    Country:  d.country,
+                    email: cyrillicToLatin(d.email),
+                    commonName: cyrillicToLatin(d.cname),
+                    organisationUnit: d.org_unit,
+                    organisation: cyrillicToLatin(d.organisation),
+                    street: cyrillicToLatin(d.address),
+                    locality: cyrillicToLatin(d.location),
+                    state: cyrillicToLatin(d.state),
+                    country: d.country,
+                    uzINN: d.inn ?? '',
+                    uzPINFL: d.pinfl ?? '',
                 },
             }
         }
@@ -51,6 +57,8 @@ export const useTokenSN = (clientData) => {
     const getTokenSN = (tokenType = 'ePass/iKey') => {
         return new Promise((resolve, reject) => {
             const payload = buildPayload(tokenType)
+            const isBst = tokenType === 'BST' || tokenType === 'smartcard'
+
             if (!payload) {
                 reject(new Error('fill_fields'))
                 return
@@ -64,19 +72,31 @@ export const useTokenSN = (clientData) => {
             }
 
             ws.onmessage = (evt) => {
-                const obj = JSON.parse(evt.data)
+                let obj
 
-                if (obj.result === 'error') {
-                    if (obj.comment === 'check cert') {
-                        // mavjud sertifikatlar tekshiruvi — reject qilib yuqoriga ko'tarish
-                        reject({ type: 'check_cert', certSnArr: obj.cert_snArr })
+                try {
+                    obj = JSON.parse(evt.data)
+                } catch {
+                    reject(new Error('invalid_ws_response'))
+                    loading.value = false
+                    ws.close()
+                    return
+                }
+
+                const isError = obj?.result === 'error' || obj?.status === 'error'
+                const errorComment = obj?.comment || obj?.comments || 'unknown_ws_error'
+
+                if (isError) {
+                    if (errorComment === 'check cert') {
+                        // Normalize to array for safe iteration in caller.
+                        reject({ type: 'check_cert', certSnArr: Array.isArray(obj?.cert_snArr) ? obj.cert_snArr : [] })
                     } else {
-                        reject(new Error(obj.comment))
+                        reject(new Error(errorComment))
                     }
                 } else {
-                    clientData.value.token_sn  = obj.var1
-                    clientData.value.csr       = obj.var2
-                    clientData.value.container = obj.var3
+                    clientData.value.token_sn = obj?.var1 ?? ''
+                    clientData.value.csr = isBst ? (obj?.var2 ?? '') : ''
+                    clientData.value.container = obj?.var3 ?? ''
                     resolve(obj)
                 }
 
