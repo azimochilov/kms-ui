@@ -81,7 +81,7 @@ const typeDevice = (data) => {
         return t('clients.internet_banking')
     }
 
-    else if (data == 2) {
+    else if (data == 4) {
         return t('clients.mobile_banking')
     }
 

@@ -83,7 +83,7 @@
     "legal_person": "Yuridik shaxs",
     "physical_person": "Jismoniy shaxs",
     "internet_banking": "Internet banking",
-    "mobile_banking_pfx": "Mobil banking PFX",
+    "mobile_banking_pfx": "Mobil banking",
     "iabs_user": "iABS foydalanuvchisi",
     "token_epass": "ePass/iKey",
     "token_virtual": "Virtual token",
@@ -125,7 +125,7 @@
   },
   "requests": {
     "title": "So'rovlar",
-    "token": "Token №",
+    "token": "Token ",
     "issued": "Berilgan (CN)",
     "organization": "Tashkilot (O)",
     "orgUnit": "Bo‘lim (OU)",

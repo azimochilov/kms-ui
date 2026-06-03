@@ -61,14 +61,14 @@ const updateVisibility = () => {
     const tc = Number(clientData.value.type_client)
     const tt = clientData.value.token_type
 
-    const isMobile = [3, 4, 7].includes(ct)   // cert_type=2 (internet banking) mobile emas
-    const isIABS   = ct === 1
+    const isMobile = [2, 4].includes(ct)   // cert_type=2 (internet banking) mobile emas
+    const isIABS   = ct === 3
 
     showTokenFields.value = !isMobile && tt !== 'virtual'
     showTypeClient.value  = !isIABS
 
     if (isIABS) {
-        // Пользоват iABS: описание, должность, пинфл — исировано
+        // Пользоват iABS: описание, должность, пинфл — исовано
         showSname.value   = false
         showAccname.value = false
         showDesc.value    = true
@@ -76,31 +76,31 @@ const updateVisibility = () => {
         showInn.value     = false
         showPinfl.value   = true
     } else {
-        // Интрет банкинг + Моилный: ИНН/ПИНФЛ заисит от типа клиента
+        // Интрет банкинг + Моилный: ИН/ПИНФЛ заисит от тпа клиента
         showSname.value   = true
         showAccname.value = true
         showDesc.value    = false
         showJob.value     = false
         if (!tc) {
-            // Тип клиента не выбран — поазать оба
+            // Тп клиента не выбран — поазать оба
             showInn.value   = true
             showPinfl.value = true
         } else {
-            showInn.value   = tc === 1   // Юридическое лицо → ИНН
-            showPinfl.value = tc === 2   // Физичекое лицо   ПИНФЛ
+            showInn.value   = tc === 1   // Юридическое лцо → ИНН
+            showPinfl.value = tc === 2   // Фзичкое лицо   ПИФЛ
         }
     }
 }
 
-// --- OU prefix map (совпадает с PHP логикой) ---
+// --- OU prefix map (совпадае с PHP лгикой) ---
 const OU_MAP = {
-    2: 'UZC003',   // mobile iABS
-    1: 'UZB003',   // iABS user
-    3: 'UZC003',   // mobile PFX
-    4: 'UZC003',   // mobile PFX alt
-    7: 'UZM003',   // Metin
-    5: 'UZJ003',   // JOYDA
-    6: 'UZS003',   // CROBS
+    2: 'UZC012',   // mobile iABS
+    1: 'UZB012',   // iABS user
+    3: 'UZC012',   // mobile PFX
+    4: 'UZC012',   // mobile PFX alt
+    7: 'UZM012',   // Metin
+    5: 'UZJ012',   // JOYDA
+    6: 'UZS012',   // CROBS
 }
 
 // Вычиляет org_unit разу при измнени fido_user_id ли cert_type
@@ -119,11 +119,13 @@ const fetchClientInfo = async () => {
     const certType = clientData.value.cert_type
     if (!fidoId || !certType) return
 
+	resetClientInfoFields()
+
     try {
         const res = await $api(`clients/${fidoId}/info/${certType}/iabs`)
 
-        const isMobile = [2, 3, 4, 7].includes(Number(certType))
-        const isIABS   = Number(certType) === 1
+        const isMobile = [2, 4].includes(Number(certType))
+        const isIABS   = Number(certType) === 3
 
         const clean = str => str ? str.replace(/[^a-zA-Z0-9 а-яА-ЯЁё]/g, '').trim() : ''
 
@@ -153,13 +155,13 @@ const fetchClientInfo = async () => {
             if (res?.mobilePhone)   clientData.value.phone        = res.mobilePhone
             if (res?.localCode)     clientData.value.local_code   = res.localCode
 
-            // Мобильный банкинг PFX / iABS — имя из login
-            if ([3, 2].includes(Number(certType))) {
+            // Мобильный банкнг PFX / iABS — имя из login
+            if ([3, 4].includes(Number(certType))) {
                 if (res?.login)        clientData.value.cname = clean(res.login)
                 if (res?.directorName) clientData.value.sname = clean(res.directorName)
             }
 
-            // Ползотель iABS — опиаие и должность из description
+            // Ползоель iABS — пиаие и олжност из description
             if (isIABS) {
                 if (res?.userName) clientData.value.cname = clean(res.userName)
                 if (res?.description) {
@@ -191,7 +193,7 @@ watch(() => clientData.value.cert_type, () => {
 })
 
 watch(() => clientData.value.type_client, (newVal) => {
-    // Для физческого лица — Location = Address (ка в PHP)
+    // Для физческго лица — Location = Address (ка в PHP)
     if (Number(newVal) === 2 && clientData.value.address) {
         clientData.value.location = clientData.value.address
     }
@@ -285,6 +287,7 @@ const onSubmit = () => {
 
         const formData = new FormData()
         const d = clientData.value
+        const isIABS = Number(d.cert_type) === 3   // iABS user
 
         const fields = [
             'operator', 'cert_type', 'type_client', 'local_code',
@@ -295,6 +298,8 @@ const onSubmit = () => {
         ]
 
         for (const key of fields) {
+	        //if (key === 'inn' && isIABS) continue
+        
             const val = d[key]
             if (val !== null && val !== undefined && val !== '')
                 formData.append(key, val)
@@ -322,6 +327,24 @@ const onSubmit = () => {
     })
 }
 
+// Backenddan to'ldiriladigan maydonlarni bo'shatish
+const resetClientInfoFields = () => {
+    clientData.value.cname        = ''
+    clientData.value.sname        = ''
+    clientData.value.accname      = ''
+    clientData.value.description  = ''
+    clientData.value.job          = ''
+    clientData.value.location     = ''
+    clientData.value.state        = ''
+    clientData.value.country      = 'UZ'   // boshlang'ich qiymat
+    clientData.value.address      = ''
+    clientData.value.email        = ''
+    clientData.value.organisation = ''
+    clientData.value.phone        = ''
+    clientData.value.inn          = ''
+    clientData.value.pinfl        = ''
+    clientData.value.local_code   = ''
+}
 
 const token_type = computed(() => [
     { value: 'ePass/iKey', label: t('clients.token_epass') },
@@ -335,9 +358,9 @@ const typeClient = computed(() => [
 ])
 
 const typeCert = computed(() => [
-    { value: 2, label: t('clients.internet_banking') },
-    { value: 3, label: t('clients.mobile_banking_pfx') },
-    { value: 1, label: t('clients.iabs_user') },
+    { value: 1, label: t('clients.internet_banking') },
+    { value: 4, label: t('clients.mobile_banking_pfx') },
+    { value: 3, label: t('clients.iabs_user') },
 ])
 
 </script>
@@ -406,7 +429,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- sname  Директор (б + мобильный) -->
+                <!-- sname  Директор (б + обильный) -->
                 <VCol cols="12" md="6" v-if="showSname">
                     <AppTextField
                         v-model="clientData.sname"
@@ -415,7 +438,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- accname  Бухгалтр (иб + мобильный) -->
+                <!-- accname  Бухгалт (иб + мобильный) -->
                 <VCol cols="12" md="6" v-if="showAccname">
                     <AppTextField
                         v-model="clientData.accname"
@@ -424,7 +447,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- description — Оисание/Департамент (iABS) -->
+                <!-- description — исани/Департамент (iABS) -->
                 <VCol cols="12" md="6" v-if="showDesc">
                     <AppTextField
                         v-model="clientData.description"
@@ -433,7 +456,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- job — Должность (iABS) -->
+                <!-- job  Должность (iABS) -->
                 <VCol cols="12" md="6" v-if="showJob">
                     <AppTextField
                         v-model="clientData.job"
