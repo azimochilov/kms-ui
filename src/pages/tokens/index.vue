@@ -28,6 +28,7 @@ const isAssignDialogOpen = ref(false)
 
 const itemId = ref(null)
 const load = ref(true)
+const isClearingToken = ref(false)
 
 const options = ref({ page: 1, itemsPerPage: 12 })
 
@@ -70,6 +71,55 @@ const deleteTokenConfirm = () => {
     })
 }
 
+const clearToken = () => {
+  if (isClearingToken.value)
+    return
+
+  isClearingToken.value = true
+  let gotResponse = false
+
+  const ws = new WebSocket('ws://localhost:8181')
+
+  ws.onopen = () => {
+    const payload = {
+      function: 'clearToken',
+      token_type: 'ePass/iKey',
+    }
+    ws.send(JSON.stringify(payload))
+  }
+
+  ws.onmessage = evt => {
+    gotResponse = true
+
+    try {
+      const obj = JSON.parse(evt.data)
+
+      if (obj?.status === 'success')
+        storeToast.successToast(t('tokenModule.clear_success'))
+      else
+        storeToast.errorToast(obj?.comments || t('error'))
+    } catch {
+      storeToast.errorToast(t('error'))
+    } finally {
+      isClearingToken.value = false
+      ws.close()
+    }
+  }
+
+  ws.onerror = () => {
+    isClearingToken.value = false
+    storeToast.errorToast(t('tokenModule.ws_connection_error'))
+    ws.close()
+  }
+
+  ws.onclose = () => {
+    if (!gotResponse)
+      storeToast.errorToast(t('tokenModule.ws_closed'))
+
+    isClearingToken.value = false
+  }
+}
+
 watch(filterUsed, () => {
   options.value.page = 1
   refresh()
@@ -109,6 +159,17 @@ onMounted(() => {
         />
 
         <!-- Assign (branch user uchun) -->
+        <VBtn
+          color="error"
+          variant="tonal"
+          :loading="isClearingToken"
+          :disabled="isClearingToken"
+          @click="clearToken"
+        >
+          <VIcon size="18" icon="tabler-eraser" class="me-1" />
+          {{ $t('tokenModule.clear_token') }}
+        </VBtn>
+
         <VBtn
           color="warning"
           variant="tonal"

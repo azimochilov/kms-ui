@@ -220,7 +220,11 @@
     "assign_success": "Привязано {updated} токенов (запрошено {total})",
     "assign_error": "Ошибка при привязке",
     "enter_seria": "Введите хотя бы один серийный номер",
-    "token_deleted": "Токен успешно удалён"
+    "token_deleted": "Токен успешно удалён",
+    "clear_token": "Очистить токен",
+    "clear_success": "Токен успешно очищен",
+    "ws_connection_error": "Ошибка подключения WebSocket",
+    "ws_closed": "Соединение WebSocket закрыто"
   },
   "logs": {
     "title": "Логи",

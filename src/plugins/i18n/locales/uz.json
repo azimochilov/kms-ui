@@ -221,7 +221,11 @@
     "assign_success": "{updated} ta token biriktirildi (jami {total} so'raldi)",
     "assign_error": "Biriktirishda xatolik yuz berdi",
     "enter_seria": "Kamida bitta seriya raqami kiriting",
-    "token_deleted": "Token muvaffaqiyatli o'chirildi"
+    "token_deleted": "Token muvaffaqiyatli o'chirildi",
+    "clear_token": "Tokenni tozalash",
+    "clear_success": "Token muvaffaqiyatli tozalandi",
+    "ws_connection_error": "WebSocket ulanishda xatolik",
+    "ws_closed": "WebSocket ulanishi yopildi"
   },
   "logs": {
     "title": "Loglar",
