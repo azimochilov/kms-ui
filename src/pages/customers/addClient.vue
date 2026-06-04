@@ -68,7 +68,7 @@ const updateVisibility = () => {
     showTypeClient.value  = !isIABS
 
     if (isIABS) {
-        // Пользоват iABS: описание, должность, пинфл — исовано
+        // Пользоват iABS: описание, должнсть, пинфл — исовано
         showSname.value   = false
         showAccname.value = false
         showDesc.value    = true
@@ -76,18 +76,18 @@ const updateVisibility = () => {
         showInn.value     = false
         showPinfl.value   = true
     } else {
-        // Интрет банкинг + Моилный: ИН/ПИНФЛ заисит от тпа клиента
+        // Интрет банкиг + Моилный: ИН/ПИФЛ заисит от тпа лиента
         showSname.value   = true
         showAccname.value = true
         showDesc.value    = false
         showJob.value     = false
         if (!tc) {
-            // Тп клиента не выбран — поазать оба
+            // Тп клента не выбран — поазать оба
             showInn.value   = true
             showPinfl.value = true
         } else {
-            showInn.value   = tc === 1   // Юридическое лцо → ИНН
-            showPinfl.value = tc === 2   // Фзичкое лицо   ПИФЛ
+            showInn.value   = tc === 1   // Юриическое лцо → ИН
+            showPinfl.value = tc === 2   // Фзичкое лцо   ПИФЛ
         }
     }
 }
@@ -103,7 +103,7 @@ const OU_MAP = {
     6: 'UZS012',   // CROBS
 }
 
-// Вычиляет org_unit разу при измнени fido_user_id ли cert_type
+// Вычияет org_unit разу при измнени fido_user_id л cert_type
 const computeOrgUnit = () => {
     const certType = clientData.value.cert_type
     const fidoId   = clientData.value.fido_user_id
@@ -155,7 +155,7 @@ const fetchClientInfo = async () => {
             if (res?.mobilePhone)   clientData.value.phone        = res.mobilePhone
             if (res?.localCode)     clientData.value.local_code   = res.localCode
 
-            // Мобильный банкнг PFX / iABS — имя из login
+            // обильный банкнг PFX / iABS — имя из login
             if ([3, 4].includes(Number(certType))) {
                 if (res?.login)        clientData.value.cname = clean(res.login)
                 if (res?.directorName) clientData.value.sname = clean(res.directorName)
@@ -168,7 +168,7 @@ const fetchClientInfo = async () => {
                     const arr = res.description.split(',')
                     clientData.value.description  = clean((arr[0] ?? '').replace('Департамент:', ''))
                     clientData.value.job          = clean((arr[1] ?? '').replace('лжноть:', ''))
-                    clientData.value.organisation = clean((arr[1] ?? '').replace('Должность:', ''))
+                    clientData.value.organisation = clean((arr[1] ?? '').replace('Дожность:', ''))
                 }
             }
         }
@@ -438,7 +438,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- accname  Бухгалт (иб + мобильный) -->
+                <!-- accname  Бухгалт (и + мобильный) -->
                 <VCol cols="12" md="6" v-if="showAccname">
                     <AppTextField
                         v-model="clientData.accname"
@@ -447,7 +447,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- description — исани/Департамент (iABS) -->
+                <!-- description — исаи/Департамент (iABS) -->
                 <VCol cols="12" md="6" v-if="showDesc">
                     <AppTextField
                         v-model="clientData.description"
