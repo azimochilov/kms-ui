@@ -178,7 +178,8 @@
     "messages": {
       "written_to_token": "Sertifikat tokenga muvaffaqiyatli yozildi",
       "must_be_revoked":  "Sertifikat bekor qilingan bo'lishi kerak",
-      "ws_error":         "Token bilan ulanishda xatolik"
+      "ws_error":         "Token bilan ulanishda xatolik",
+      "revoke_already_pending": "Ushbu sertifikat bo'yicha bekor qilish so'rovi allaqachon yuborilgan"
     }
   },
   "tokenModule": {

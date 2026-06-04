@@ -1,6 +1,7 @@
 <script setup>
-import {ref, computed} from 'vue'
-import {$api} from "@/utils/api";
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { $api } from '@/utils/api'
 
 const props = defineProps({
     modelValue: Boolean,
@@ -8,6 +9,7 @@ const props = defineProps({
     isAdmin: Boolean,
 })
 const emit = defineEmits(['update:modelValue', 'revoked'])
+const { t } = useI18n()
 
 const selectedReason = ref(null)
 const loading = ref(false)
@@ -27,9 +29,30 @@ const reasons = [
 const reasonItems = computed(() =>
     reasons.map(r => ({
         title: `${r.uz} / ${r.ru}`,
-        value: r.ru,  // backendga rus tilida ketadi
+        value: r.ru, // backendga rus tilida ketadi
     }))
 )
+
+const getApiErrorMessage = e => {
+    const rawError = e?.data?.error
+        ?? e?.response?._data?.error
+        ?? e?.response?.data?.error
+        ?? e?.data?.detail
+        ?? e?.response?._data?.detail
+        ?? e?.response?.data?.detail
+        ?? e?.message
+
+    if (typeof rawError === 'string')
+        return rawError
+
+    if (rawError && typeof rawError === 'object')
+        return String(rawError?.detail ?? rawError?.message ?? '')
+
+    return ''
+}
+
+const isPendingRevokeError = message =>
+    String(message).toLowerCase().includes('already pending')
 
 const close = () => {
     emit('update:modelValue', false)
@@ -45,10 +68,19 @@ const submit = async () => {
 
     try {
         // 1-qadam: branch revoke request
-        await $api(`/certificates/${props.certSn}/revoke/`, {
-            method: 'POST',
-            body: {reason: selectedReason.value},
-        })
+        try {
+            await $api(`/certificates/${props.certSn}/revoke/`, {
+                method: 'POST',
+                body: { reason: selectedReason.value },
+            })
+        } catch (e) {
+            const apiMessage = getApiErrorMessage(e)
+            const pendingRequest = isPendingRevokeError(apiMessage)
+
+            // Request allaqachon yaratilgan bo'lsa, admin uchun revoke/admin ni davom ettiramiz.
+            if (!(props.isAdmin && pendingRequest))
+                throw e
+        }
 
         // 2-qadam: agar admin bo'lsa — darhol admin revoke ham qiladi
         if (props.isAdmin) {
@@ -60,8 +92,10 @@ const submit = async () => {
         emit('revoked')
         close()
     } catch (e) {
-        console.log(e)
-        error.value = e?.response?.data?.error || 'Xatolik yuz berdi'
+        const apiMessage = getApiErrorMessage(e)
+        error.value = isPendingRevokeError(apiMessage)
+            ? t('certificates.messages.revoke_already_pending')
+            : (apiMessage || t('error'))
     } finally {
         loading.value = false
     }
