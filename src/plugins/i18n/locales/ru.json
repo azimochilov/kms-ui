@@ -120,7 +120,12 @@
     "client_devices": "Устройства клиента",
     "client_certificates": "Сертификаты клиента",
     "device_id_type": "Тип ID устройства",
-    "device_id_number": "ID устройства"
+    "device_id_number": "ID устройства",
+    "primary_device_type": "Тип сертификата",
+    "device_type_all": "Все",
+    "device_type_epass": "ePass/iKey (токен)",
+    "device_type_virtual": "Виртуальный",
+    "device_type_mobile": "Мобильный"
   },
   "requests": {
     "title": "Запросы",

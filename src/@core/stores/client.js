@@ -52,6 +52,9 @@ export const useClient = defineStore("client", {
             const statusValue = filters?.status
             if (statusValue !== null && statusValue !== undefined && statusValue !== '')
                 query.status = Number(statusValue)
+            const deviceType = filters?.primary_device_type
+            if (deviceType)
+                query.primary_device_type = deviceType
 
             return await this.fetchFromAvailableEndpoints(query).then(res => {
                 const payload = res?.result ?? res

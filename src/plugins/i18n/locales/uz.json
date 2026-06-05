@@ -121,7 +121,12 @@
     "client_devices": "Mijoz qurilmalari",
     "client_certificates": "Mijoz sertifikatlari",
     "device_id_type": "Qurilma ID turi",
-    "device_id_number": "Qurilma ID raqami"
+    "device_id_number": "Qurilma ID raqami",
+    "primary_device_type": "Sertifikat turi",
+    "device_type_all": "Barchasi",
+    "device_type_epass": "ePass/iKey (token)",
+    "device_type_virtual": "Virtual",
+    "device_type_mobile": "Mobil"
   },
   "requests": {
     "title": "So'rovlar",

@@ -50,6 +50,7 @@
     const options = ref({ page: 1, itemsPerPage: 10, sortBy: [''], sortDesc: [false] })
     const searchQuery = ref('')
     const statusFilter = ref(null)
+    const deviceTypeFilter = ref(null)
     let searchDebounceTimer = null
     const isAddNewUserDrawerVisible = ref(false)
     const load = ref(true)
@@ -64,10 +65,28 @@
         { title: t('clients.city'), key: 'location' },
         { title: t('clients.subdivision'), key: 'org_unit' },
         { title: t('clients.inn'), key: 'inn' },
+        { title: t('clients.phone'), key: 'phone' },
         { title: t('settingsModule.branch'), key: 'branch' },
+        { title: t('clients.primary_device_type'), key: 'primary_device_type' },
         { title: t('settingsModule.status'), key: 'status' },
         { title: t('settingsModule.action'), key: 'actions' },
     ])
+
+    const deviceTypeOptions = computed(() => [
+        { title: t('clients.device_type_epass'), value: 'epass/ikey' },
+        { title: t('clients.device_type_virtual'), value: 'virtual' },
+        { title: t('clients.device_type_mobile'), value: 'mobile' },
+    ])
+
+    const deviceTypeChip = (type) => {
+        const map = {
+            'epass/ikey': { color: 'warning', label: 'ePass/iKey' },
+            'virtual':    { color: 'info',    label: 'Virtual' },
+            'mobile':     { color: 'success', label: 'Mobile' },
+            'smartcard':  { color: 'secondary', label: 'Smartcard' },
+        }
+        return map[type] ?? { color: 'default', label: type ?? '—' }
+    }
 
 
 
@@ -108,6 +127,7 @@
         store.fetchClient(options.value.itemsPerPage, options.value.page, {
             search: searchQuery.value,
             status: statusFilter.value,
+            primary_device_type: deviceTypeFilter.value,
         })
             .then(() => {
                 load.value = false
@@ -190,6 +210,14 @@
         refresh()
     })
 
+    watch(deviceTypeFilter, () => {
+        if (options.value.page !== 1) {
+            options.value.page = 1
+            return
+        }
+        refresh()
+    })
+
     watch(searchQuery, () => {
         if (searchDebounceTimer)
             clearTimeout(searchDebounceTimer)
@@ -224,6 +252,13 @@
                     <VCol cols="12" sm="4">
                         <AppSelect v-model="statusFilter" :placeholder="$t('select_status')" :items="statusOptions"
                             item-title="title" item-value="value" clearable
+                            clear-icon="tabler-x" />
+                    </VCol>
+
+                    <!-- 👉 Select Device Type -->
+                    <VCol cols="12" sm="4">
+                        <AppSelect v-model="deviceTypeFilter" :placeholder="$t('clients.primary_device_type')"
+                            :items="deviceTypeOptions" item-title="title" item-value="value" clearable
                             clear-icon="tabler-x" />
                     </VCol>
 
@@ -292,6 +327,16 @@
                                             ? (options.page - 1) * tableItemsPerPage + index + 1
                                             : index + 1
                                     }}
+                                </template>
+
+                                <template v-else-if="column.key === 'primary_device_type'">
+                                    <VChip
+                                        :color="deviceTypeChip(item.primary_device_type).color"
+                                        size="small"
+                                        label
+                                    >
+                                        {{ deviceTypeChip(item.primary_device_type).label }}
+                                    </VChip>
                                 </template>
 
                                 <template v-else-if="column.key === 'status'">
