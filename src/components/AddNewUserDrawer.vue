@@ -47,7 +47,14 @@ const userData = ref({
   type: null,
   active: true,
   branch: null,
-  mfo: null
+  mfo: null,
+  iabs: false,
+  ibank: false,
+  mbank: false,
+  metin: '',
+  joyda: false,
+  crobs: false,
+  tekmetes: false,
 
 })
 const isPasswordVisible = ref(false)
@@ -70,6 +77,13 @@ const closeNavigationDrawer = () => {
   nextTick(() => {
     refForm.value?.reset()
     userData.value.status = true
+    userData.value.iabs = false
+    userData.value.ibank = false
+    userData.value.mbank = false
+    userData.value.metin = ''
+    userData.value.joyda = false
+    userData.value.crobs = false
+    userData.value.tekmetes = false
     refForm.value?.resetValidation()
   })
 }
@@ -135,7 +149,14 @@ watch(() => props.update_dataId, (id) => {
         type: data.type ?? (data.role === 'limited_admin' ? 'limited' : data.role) ?? null,
         active: Number(data.status) === 1,
         mfo: data.mfo,
-        branch: data.branch
+        branch: data.branch,
+        iabs: Boolean(data.iabs),
+        ibank: Boolean(data.ibank),
+        mbank: Boolean(data.mbank),
+        metin: data.metin ?? '',
+        joyda: Boolean(data.joyda),
+        crobs: Boolean(data.crobs),
+        tekmetes: Boolean(data.tekmetes),
       }
 
     })
@@ -212,12 +233,102 @@ watch(() => props.update_dataId, (id) => {
                 <AppTextField v-model="userData.branch" :label="$t('settingsModule.branch')" />
               </VCol>
 
-
-
               <!-- 👉 MFO -->
               <VCol cols="12">
                 <AppTextField v-model="userData.mfo" :label="$t('settingsModule.mfo')" type="number"
                   :rules="[minLengthValidator(userData.mfo, 5), maxLengthValidator(userData.mfo, 5)]" />
+              </VCol>
+
+              <VCol cols="12">
+                <VSheet class="cert-access-card" border rounded="lg">
+                  <div class="d-flex align-center mb-3">
+                    <VIcon icon="tabler-shield-check" size="20" class="me-2 cert-access-icon" />
+                    <div class="text-subtitle-1 font-weight-medium">
+                      {{ $t('settingsModule.cert_type_access') }}
+                    </div>
+                  </div>
+
+                  <VRow class="cert-access-grid">
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        v-model="userData.iabs"
+                        :label="$t('settingsModule.cert_type_iabs_user')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                      />
+                    </VSheet>
+                  </VCol>
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        v-model="userData.ibank"
+                        :label="$t('settingsModule.cert_type_internet_banking')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                      />
+                    </VSheet>
+                  </VCol>
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        v-model="userData.mbank"
+                        :label="$t('settingsModule.cert_type_mobile_iabs_pfx')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                      />
+                    </VSheet>
+                  </VCol>
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        :model-value="Boolean(userData.metin)"
+                        :label="$t('settingsModule.cert_type_metin_mobile')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                        @update:model-value="val => { userData.metin = val ? '1' : '' }"
+                      />
+                    </VSheet>
+                  </VCol>
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        v-model="userData.joyda"
+                        :label="$t('settingsModule.cert_type_joyda')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                      />
+                    </VSheet>
+                  </VCol>
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        v-model="userData.crobs"
+                        :label="$t('settingsModule.cert_type_crobs')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                      />
+                    </VSheet>
+                  </VCol>
+                  <VCol cols="12" sm="6">
+                    <VSheet class="cert-option" border rounded="lg">
+                      <VCheckbox
+                        v-model="userData.tekmetes"
+                        :label="$t('settingsModule.cert_type_tekmetes')"
+                        density="comfortable"
+                        hide-details
+                        color="primary"
+                      />
+                    </VSheet>
+                  </VCol>
+                  </VRow>
+                </VSheet>
               </VCol>
 
 
@@ -243,3 +354,29 @@ watch(() => props.update_dataId, (id) => {
     </PerfectScrollbar>
   </VNavigationDrawer>
 </template>
+
+<style scoped>
+.cert-access-card {
+  padding: 14px 12px;
+  background: rgba(var(--v-theme-surface), 0.75);
+}
+
+.cert-access-icon {
+  color: rgb(var(--v-theme-primary));
+}
+
+.cert-access-grid {
+  margin-inline: -4px;
+}
+
+.cert-option {
+  padding: 2px 8px;
+  background-color: rgba(var(--v-theme-surface), 0.8);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cert-option:hover {
+  border-color: rgba(var(--v-theme-primary), 0.45);
+  background-color: rgba(var(--v-theme-primary), 0.04);
+}
+</style>

@@ -10,6 +10,7 @@ import PhoneInput from '@/components/clients/PhoneInput.vue'
 const { t } = useI18n()
 const store = useClient()
 const storetoast = useToast()
+const currentUser = useCookie('userData')
 const operators = ref([])
 const refForm = ref()
 const serverErrors = ref({})
@@ -334,11 +335,59 @@ const typeClient = computed(() => [
     { value: 2, label: t('clients.physical_person') },
 ])
 
-const typeCert = computed(() => [
-    { value: 2, label: t('clients.internet_banking') },
-    { value: 3, label: t('clients.mobile_banking_pfx') },
-    { value: 1, label: t('clients.iabs_user') },
-])
+const typeCert = computed(() => {
+    const user = currentUser.value || {}
+    const isAdminLike = ['admin', 'limited_admin'].includes(String(user?.role || '').toLowerCase())
+    const options = []
+    const seen = new Set()
+
+    const addOption = (value, label) => {
+        const key = `${value}:${label}`
+        if (seen.has(key))
+            return
+
+        seen.add(key)
+        options.push({ value, label })
+    }
+
+    // Admin and limited admin can see all known cert types.
+    if (isAdminLike) {
+        addOption(1, t('clients.iabs_user'))
+        addOption(2, t('clients.internet_banking'))
+        addOption(2, t('clients.mobile_banking_iabs'))
+        addOption(2, t('clients.mobile_banking_pfx'))
+        addOption(5, t('clients.mobile_banking_metin'))
+        addOption(5, t('clients.joyda'))
+        addOption(6, t('clients.crobs'))
+        addOption(8, t('clients.tekmetes'))
+        return options
+    }
+
+    if (user?.iabs)
+        addOption(1, t('clients.iabs_user'))
+
+    if (user?.ibank)
+        addOption(2, t('clients.internet_banking'))
+
+    if (user?.mbank) {
+        addOption(2, t('clients.mobile_banking_iabs'))
+        addOption(2, t('clients.mobile_banking_pfx'))
+    }
+
+    if (user?.metin)
+        addOption(5, t('clients.mobile_banking_metin'))
+
+    if (user?.joyda)
+        addOption(5, t('clients.joyda'))
+
+    if (user?.crobs)
+        addOption(6, t('clients.crobs'))
+
+    if (user?.tekmetes)
+        addOption(8, t('clients.tekmetes'))
+
+    return options
+})
 
 </script>
 

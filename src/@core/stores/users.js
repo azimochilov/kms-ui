@@ -97,6 +97,13 @@ export const useUsers = defineStore("users", {
             payload.role = this.mapRoleToApi(data?.type ?? data?.role)
             payload.branch = data?.branch ?? undefined
             payload.mfo = data?.mfo ?? undefined
+            payload.iabs = Boolean(data?.iabs)
+            payload.ibank = Boolean(data?.ibank)
+            payload.mbank = Boolean(data?.mbank)
+            payload.metin = data?.metin ?? ''
+            payload.joyda = Boolean(data?.joyda)
+            payload.crobs = Boolean(data?.crobs)
+            payload.tekmetes = Boolean(data?.tekmetes)
 
             const firstName = data?.f_name ?? data?.first_name
             const lastName = data?.l_name ?? data?.last_name
