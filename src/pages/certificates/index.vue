@@ -352,6 +352,33 @@ const setSopin = (item) => {
     }
 }
 
+// Tokenni tozalash — WebSocket orqali ePass/iKey tokenini clear qilish
+const clearToken = () => {
+    const ws = new WebSocket('ws://localhost:8181')
+
+    ws.onopen = () => {
+        ws.send(JSON.stringify({ function: 'clearToken', token_type: 'ePass/iKey' }))
+    }
+
+    ws.onmessage = (evt) => {
+        const res = JSON.parse(evt.data)
+        if (res.status === 'success') {
+            storetoast.successToast('Токен успешно очищен')
+        } else {
+            storetoast.errorToast(res.comments)
+        }
+        ws.close()
+    }
+
+    ws.onclose = () => {
+        console.warn('WebSocket connection closed')
+    }
+
+    ws.onerror = () => {
+        storetoast.errorToast(t('certificates.messages.ws_error'))
+    }
+}
+
 // PFX yuklab olish — API dan olib yuklab olish
 const downloadPFX = async (item) => {
     try {
@@ -424,11 +451,20 @@ const downloadPFX = async (item) => {
 <template>
     <VCard>
         <VRow class="px-4 py-4">
-            <VCol>
-                <p class="text-22 font-roboto">
+            <VCol class="d-flex align-center gap-3">
+                <p class="text-22 font-roboto mb-0">
                     <VIcon size="22" icon="tabler-file-certificate" />
                     {{ $t('certificates.title') }}
                 </p>
+                <VBtn
+                    color="warning"
+                    variant="tonal"
+                    size="small"
+                    prepend-icon="tabler-eraser"
+                    @click="clearToken"
+                >
+                    Tokenni tozalash
+                </VBtn>
             </VCol>
             <VCol class="d-flex justify-end">
                 <VCol cols="12" sm="6">
