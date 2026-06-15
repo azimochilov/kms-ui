@@ -23,6 +23,21 @@
     const storetoast = useToast()
     const isDialogVisible = ref(false)
 
+    // --- rejected comment dialog ---
+    const commentDialog = ref(false)
+    const selectedRejectedItem = ref(null)
+
+    const openCommentDialog = (item) => {
+        selectedRejectedItem.value = item
+        commentDialog.value = true
+    }
+
+    const openEditFromComment = () => {
+        commentDialog.value = false
+        updateDataId.value = selectedRejectedItem.value?.id
+        isAddNewUserDrawerVisible.value = true
+    }
+
 
 
 
@@ -340,7 +355,28 @@
                                 </template>
 
                                 <template v-else-if="column.key === 'status'">
+                                    <template v-if="item.fix && item.comment">
+                                        <div class="d-flex align-center gap-1">
+                                            <VChip
+                                                color="warning"
+                                                size="small"
+                                                label
+                                                class="cursor-pointer"
+                                                @click="openCommentDialog(item)"
+                                            >
+                                                Rad etilgan
+                                            </VChip>
+                                            <VIcon
+                                                size="18"
+                                                icon="tabler-message-exclamation"
+                                                color="warning"
+                                                class="cursor-pointer"
+                                                @click="openCommentDialog(item)"
+                                            />
+                                        </div>
+                                    </template>
                                     <VChip
+                                        v-else
                                         :color="item.status === 1 ? 'success' : 'error'"
                                         size="small"
                                         label
@@ -398,9 +434,31 @@
         <EditClient v-model:isDrawerOpen="isAddNewUserDrawerVisible" v-model:update_dataId="updateDataId"
             @refresh="refresh" />
 
-
         <DeleteDialog v-model:delete-dialog="deleteDialog" @closeDelete="deleteDialog = false"
             @deleteItemConfirm="deleteItemConfirm" />
+
+        <!-- Rad etilgan client izohi -->
+        <VDialog v-model="commentDialog" max-width="480">
+            <VCard>
+                <VCardTitle class="d-flex align-center gap-2 pa-4">
+                    <VIcon icon="tabler-message-exclamation" color="warning" size="22" />
+                    Rad etilish sababi
+                </VCardTitle>
+                <VDivider />
+                <VCardText class="pa-4">
+                    <p class="text-body-1">{{ selectedRejectedItem?.comment }}</p>
+                </VCardText>
+                <VDivider />
+                <VCardActions class="pa-4 gap-2">
+                    <VBtn variant="tonal" color="secondary" @click="commentDialog = false">
+                        Yopish
+                    </VBtn>
+                    <VBtn color="primary" prepend-icon="tabler-pencil" @click="openEditFromComment">
+                        Tahrirlash
+                    </VBtn>
+                </VCardActions>
+            </VCard>
+        </VDialog>
 
 
 

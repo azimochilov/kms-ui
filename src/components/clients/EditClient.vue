@@ -153,7 +153,7 @@ const sendClientUpdate = () => {
                 formDataa.append(key, val)
         }
 
-        if (d.fileToUpload) formDataa.append('fileToUpload', d.fileToUpload)
+        if (d.fileToUpload) formDataa.append('file_upload', d.fileToUpload)
 
         store.updateClient(props.update_dataId, formDataa)
             .then(() => {
@@ -179,12 +179,18 @@ const handleDrawerModelValueUpdate = val => {
     })
 }
 
+const rejectionComment = ref(null)
+
 watch(() => props.update_dataId, (id) => {
     if (id) {
         store.fetchClientOneData(id).then(res => {
-            clientData.value = res.result
+            const result = res.result ?? res
+            clientData.value = result
+            rejectionComment.value = (result.fix && result.comment) ? result.comment : null
             nextTick(() => updateVisibility())
         })
+    } else {
+        rejectionComment.value = null
     }
 }, { immediate: true })
 
@@ -203,6 +209,15 @@ const handleFileChange = (event) => {
         <PerfectScrollbar :options="{ wheelPropagation: false }">
             <VCard flat>
                 <VCardText>
+                    <VAlert
+                        v-if="rejectionComment"
+                        type="warning"
+                        variant="tonal"
+                        class="mb-4"
+                        :title="'Rad etilish sababi'"
+                        :text="rejectionComment"
+                        icon="tabler-message-exclamation"
+                    />
                     <VForm ref="refForm" v-model="isFormValid" @submit.prevent="sendClientUpdate">
                         <VRow>
 
