@@ -118,6 +118,7 @@
     "attachRequestFile": "So‘rov faylini biriktirish",
     "chooseFile": "Fayl tanlang",
     "mobile_banking": "Mobil banking",
+    "client_info": "Mijoz ma'lumotlari",
     "client_devices": "Mijoz qurilmalari",
     "client_certificates": "Mijoz sertifikatlari",
     "device_id_type": "Qurilma ID turi",
@@ -183,7 +184,8 @@
     "messages": {
       "written_to_token": "Sertifikat tokenga muvaffaqiyatli yozildi",
       "must_be_revoked":  "Sertifikat bekor qilingan bo'lishi kerak",
-      "ws_error":         "Token bilan ulanishda xatolik"
+      "ws_error":         "Token bilan ulanishda xatolik",
+      "pfx_not_found":    "Sertifikat ma'lumotlari topilmadi"
     }
   },
   "tokenModule": {

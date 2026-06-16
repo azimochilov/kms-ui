@@ -117,6 +117,7 @@
     "attachRequestFile": "Прикрепить фйл запроса",
     "chooseFile": "Выберите фал",
     "mobile_banking": "Мбильный банкинг",
+    "client_info": "Информация о клиенте",
     "client_devices": "Устройства клиента",
     "client_certificates": "Сертификаты клиента",
     "device_id_type": "Тип ID устройства",
@@ -182,7 +183,8 @@
     "messages": {
       "written_to_token": "Серификат успешно зписан на токен",
       "must_be_revoked":  "Серификат должен быь отозван",
-      "ws_error":         "Ошибка пдключения к токеу"
+      "ws_error":         "Ошибка пдключения к токеу",
+      "pfx_not_found":    "Данные сертификата не найдены"
     }
   },
   "tokenModule": {

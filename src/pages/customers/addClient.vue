@@ -14,6 +14,9 @@ const operators = ref([])
 const refForm = ref()
 const serverErrors = ref({})
 
+const userData = useCookie('userData')
+const isAdmin = computed(() => userData.value?.role === 'admin')
+
 // --- clientData ---
 const clientData = ref({
     operator: null,
@@ -312,17 +315,42 @@ const onSubmit = () => {
 
         store.createClients(formData)
             .then(res => {
-                if (res?.id || res?.success !== false) {
-                    storetoast.successToast(t('settingsModule.client_created'))
-                    $router.back()
+                storetoast.successToast(t('settingsModule.client_created'))
+                const clientId = res?.id
+                const cert = res?.cert
+                if (isAdmin.value && clientId && cert?.cert_sn) {
+                    $router.push({
+                        path: '/customers/clientCreated',
+                        query: {
+                            clientId: String(clientId),
+                            certSn: cert.cert_sn,
+                            tokenSn: cert.token_sn || '',
+                            deviceType: cert.device_type || '',
+                        },
+                    })
+                } else {
+                    $router.push('/customers')
                 }
             })
             .catch(err => {
-                const errors = err?.data?.error ?? err?.response?._data?.error ?? {}
-                if (typeof errors === 'object' && !Array.isArray(errors))
-                    serverErrors.value = errors
-                else
+                const errData = err?.data ?? err?.response?._data ?? {}
+                const errors = errData?.error ?? errData ?? {}
+                if (typeof errors === 'object' && !Array.isArray(errors)) {
+                    const msgs = Object.values(errors).flat().map(v => String(v))
+                    const hasExistsError = msgs.some(m =>
+                        m.toLowerCase().includes('already exists') ||
+                        m.toLowerCase().includes('mavjud')
+                    )
+                    if (hasExistsError || !msgs.length) {
+                        storetoast.errorToast(msgs[0] || t('error'))
+                    } else {
+                        serverErrors.value = Object.fromEntries(
+                            Object.entries(errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+                        )
+                    }
+                } else {
                     storetoast.errorToast(String(errors) || t('error'))
+                }
             })
     })
 }
