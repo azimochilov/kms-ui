@@ -7,6 +7,7 @@
     import { computed } from 'vue'
     import { useI18n } from 'vue-i18n'
     import { VDataTable } from 'vuetify/labs/VDataTable'
+    import { $api } from '@/utils/api'
 
 
 
@@ -113,6 +114,22 @@
     const editUser = (id) => {
         updateDataId.value = id
         isAddNewUserDrawerVisible.value = true
+    }
+
+    const refreshingPhoneId = ref(null)
+
+    const refreshPhone = async (item) => {
+        refreshingPhoneId.value = item.id
+        try {
+            const res = await $api(`clients/${item.id}/refresh-phone/`, { method: 'POST' })
+            item.phone = res.phone
+            storetoast.successToast('Telefon raqam yangilandi')
+        } catch (err) {
+            const msg = err?.data?.error ?? err?.message ?? t('error')
+            storetoast.errorToast(String(msg))
+        } finally {
+            refreshingPhoneId.value = null
+        }
     }
 
     const totalPages = computed(() => {
@@ -321,6 +338,13 @@
                                                             <VIcon icon="tabler-trash" />
                                                         </template>
                                                         <VListItemTitle>{{ $t('common.delete') }}</VListItemTitle>
+                                                    </VListItem>
+
+                                                    <VListItem @click="refreshPhone(item)" :disabled="refreshingPhoneId === item.id">
+                                                        <template #prepend>
+                                                            <VIcon :icon="refreshingPhoneId === item.id ? 'tabler-loader' : 'tabler-phone-plus'" />
+                                                        </template>
+                                                        <VListItemTitle>Telefon yangilash</VListItemTitle>
                                                     </VListItem>
 
                                                     <VListItem @click="$router.push(`customers/client/${item.id}`)">
