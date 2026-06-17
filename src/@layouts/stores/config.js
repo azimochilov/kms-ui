@@ -22,7 +22,7 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
   const isVerticalNavCollapsed = cookieRef('isVerticalNavCollapsed', layoutConfig.verticalNav.isVerticalNavCollapsed)
 
   // 👉 App Content Width
-  const appContentWidth = cookieRef('appContentWidth', layoutConfig.app.contentWidth)
+  const appContentWidth = ref(layoutConfig.app.contentWidth)
 
   // 👉 App Content Layout Nav
   const appContentLayoutNav = ref(layoutConfig.app.contentLayoutNav)

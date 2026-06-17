@@ -1,6 +1,7 @@
 <script setup>
 import { useToast } from '@/@core/stores/toastConfig'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { $api } from "@/utils/api";
 
 definePage({
   meta: {

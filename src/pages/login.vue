@@ -145,19 +145,18 @@ const onSubmit = () => {
 
       <!-- 👉 Auth Card -->
       <VCard class="auth-card pa-4" max-width="448">
-        <VCardItem class="justify-center">
-          <template #prepend>
-            <div class="d-flex">
+        <VCardItem class="justify-center pb-0">
+          <div class="d-flex flex-column align-center gap-2">
+            <div style="transform: scale(1.8); margin-bottom: 8px;">
               <VNodeRenderer :nodes="themeConfig.app.logo" />
             </div>
-          </template>
-
-
+            <span class="text-h6 font-weight-bold text-primary">STYX KMS</span>
+          </div>
         </VCardItem>
 
         <VCardText class="pt-1">
           <h4 class="text-h4 mb-1">
-            {{ $t('login.welcome_kms') }} 👋🏻
+            {{ $t('login.welcome_kms') }}
           </h4>
           <p class="mb-0">
             {{ $t('login.please_log') }}

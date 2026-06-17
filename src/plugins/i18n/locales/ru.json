@@ -48,21 +48,21 @@
     "not_used": "Foydalanilmagan"
   },
   "login": {
-    "welcome_kms": "Добро пожаловаь в KMS!",
-    "please_log": "Пожалуйста, войдте в свою учетную запись и начните приключение.",
+    "welcome_kms": "STYX KMS | Hamkor Bank",
+    "please_log": "Styx Key Management System — система управления цифровыми сертификатами Hamkor Bank.",
     "username": "Логин",
     "enter_username": "Введите логин",
     "password": "Пароль",
-    "loginButton": "ойти"
+    "loginButton": "Войти"
   },
   "clients": {
     "title": "Клиенты",
     "add_client": "Добавит клиента",
     "iabs_id": "IABS ID",
-    "cert_type": "ип сертификата",
+    "cert_type": "Тип сертификата",
     "client_type": "Тип клиента",
     "operator": "Оператор",
-    "cname": "Плное имя (CN)",
+    "cname": "Полное имя (CN)",
     "sname": "Имя директора",
     "accname": "ФИО Бухалтера",
     "description": "Описание (Департамент)",
