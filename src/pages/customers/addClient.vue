@@ -22,6 +22,7 @@ const isAdmin = computed(() => userData.value?.role === 'admin')
 const clientData = ref({
     operator: null,
     cert_type: null,
+    iabs_type: 1,
     type_client: null,
     local_code: '',
     cname: '',
@@ -119,6 +120,14 @@ const computeOrgUnit = () => {
     }
 }
 
+// --- iABS type ---
+const iabsTypes = [
+    { value: 1, label: 'Fido iABS' },
+    { value: 2, label: 'Tune Consulting' },
+]
+
+const iabsDbo = computed(() => clientData.value.iabs_type === 2 ? 'tune' : 'iabs')
+
 // --- fetchClientInfo ---
 const fetchClientInfo = async () => {
     const fidoId  = clientData.value.fido_user_id
@@ -128,7 +137,7 @@ const fetchClientInfo = async () => {
 	resetClientInfoFields()
 
     try {
-        const res = await $api(`clients/${fidoId}/info/${certType}/iabs`)
+        const res = await $api(`clients/${fidoId}/info/${certType}/${iabsDbo.value}`)
 
         const isMobile = [2, 4].includes(Number(certType))
         const isIABS   = Number(certType) === 3
@@ -146,7 +155,31 @@ const fetchClientInfo = async () => {
             clientData.value.inn      = u.inn     ?? clientData.value.inn
             clientData.value.pinfl    = u.pinfl   ?? clientData.value.pinfl
             clientData.value.phone    = u.phone   ?? clientData.value.phone
+        } else if (clientData.value.iabs_type === 2) {
+            // Tune Consulting mapping
+            if (res?.ownerFullName)    clientData.value.cname        = clean(res.ownerFullName)
+            if (res?.directorFullName) clientData.value.sname        = clean(res.directorFullName)
+            if (res?.name)             clientData.value.accname      = clean(res.name)
+            if (res?.cityName)         clientData.value.location     = clean(res.cityName)
+            if (res?.regionName)       clientData.value.state        = clean(res.regionName)
+            if (res?.address)          clientData.value.address      = clean(res.address)
+            if (res?.businessName)     clientData.value.organisation = clean(res.businessName)
+            if (res?.orgUnit)          clientData.value.org_unit     = clean(res.orgUnit)
+            if (res?.email)            clientData.value.email        = res.email
+            if (res?.inn)              clientData.value.inn          = res.inn
+            if (res?.pinfl)            clientData.value.pinfl        = res.pinfl
+            if (res?.phoneNumber)      clientData.value.phone        = res.phoneNumber
+
+            if (isIABS) {
+                if (res?.ownerFullName) clientData.value.cname = clean(res.ownerFullName)
+                if (res?.description) {
+                    const arr = res.description.split(',')
+                    clientData.value.description = clean((arr[0] ?? '').replace('Департамент:', ''))
+                    clientData.value.job         = clean((arr[1] ?? '').replace('Должность:', ''))
+                }
+            }
         } else {
+            // Fido iABS mapping
             if (res?.userName)      clientData.value.cname        = clean(res.userName)
             if (res?.directorName)  clientData.value.sname        = clean(res.directorName)
             if (res?.email)  		clientData.value.email        = res.email
@@ -161,13 +194,11 @@ const fetchClientInfo = async () => {
             if (res?.mobilePhone)   clientData.value.phone        = res.mobilePhone
             if (res?.localCode)     clientData.value.local_code   = res.localCode
 
-            // обильный банкнг PFX / iABS — имя из login
             if ([3, 4].includes(Number(certType))) {
                 if (res?.login)        clientData.value.cname = clean(res.login)
                 if (res?.directorName) clientData.value.sname = clean(res.directorName)
             }
 
-            // Ползоель iABS — пиаие и олжност из description
             if (isIABS) {
                 if (res?.userName) clientData.value.cname = clean(res.userName)
                 if (res?.description) {
@@ -196,6 +227,10 @@ watch(() => clientData.value.cert_type, () => {
     computeOrgUnit()
     fetchClientInfo()
     updateVisibility()
+})
+
+watch(() => clientData.value.iabs_type, () => {
+    fetchClientInfo()
 })
 
 watch(() => clientData.value.type_client, (newVal) => {
@@ -420,6 +455,17 @@ const typeCert = computed(() => [
                         item-title="label"
                         item-value="value"
                         :error-messages="serverErrors.cert_type"
+                    />
+                </VCol>
+
+                <!-- iabs_type -->
+                <VCol cols="12" md="6">
+                    <AppSelect
+                        v-model="clientData.iabs_type"
+                        label="iABS turi"
+                        :items="iabsTypes"
+                        item-title="label"
+                        item-value="value"
                     />
                 </VCol>
 
