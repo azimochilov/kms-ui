@@ -240,8 +240,8 @@ const certRows = computed(() => {
             </VBtn>
 
             <VBtn
-                v-if="canWriteToToken"
                 color="primary"
+                :disabled="!canWriteToToken"
                 :loading="writing"
                 prepend-icon="tabler-usb"
                 @click="writeToToken"
