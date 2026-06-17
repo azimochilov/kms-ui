@@ -8,6 +8,7 @@ import { $api } from "@/utils/api";
 import PhoneInput from '@/components/clients/PhoneInput.vue'
 
 const { t } = useI18n()
+const router = useRouter()
 const store = useClient()
 const storetoast = useToast()
 const operators = ref([])
@@ -320,18 +321,16 @@ const onSubmit = () => {
                 storetoast.successToast(t('settingsModule.client_created'))
                 const clientId = res?.id
                 const cert = res?.cert
-                if (isAdmin.value && clientId && cert?.cert_sn) {
-                    $router.push({
-                        path: '/customers/clientCreated',
-                        query: {
-                            clientId: String(clientId),
-                            certSn: cert.cert_sn,
-                            tokenSn: cert.token_sn || '',
-                            deviceType: cert.device_type || '',
-                        },
-                    })
+                if (isAdmin.value && clientId) {
+                    const query = { clientId: String(clientId) }
+                    if (cert?.cert_sn) {
+                        query.certSn = cert.cert_sn
+                        query.tokenSn = cert.token_sn || ''
+                        query.deviceType = cert.device_type || ''
+                    }
+                    router.push({ path: '/customers/clientCreated', query })
                 } else {
-                    $router.push('/customers')
+                    router.push('/customers')
                 }
             })
             .catch(err => {
