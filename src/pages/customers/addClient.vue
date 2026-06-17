@@ -56,7 +56,8 @@ const showDesc        = ref(false)
 const showJob         = ref(false)
 const showInn         = ref(false)
 const showPinfl       = ref(false)
-const showTokenFields = ref(true)
+const showTokenType   = ref(true)
+const showTokenSN     = ref(true)
 const showTypeClient  = ref(true)
 
 const updateVisibility = () => {
@@ -64,10 +65,11 @@ const updateVisibility = () => {
     const tc = Number(clientData.value.type_client)
     const tt = clientData.value.token_type
 
-    const isMobile = [2, 4].includes(ct)   // cert_type=2 (internet banking) mobile emas
+    const isMobile = [2, 4].includes(ct)
     const isIABS   = ct === 3
 
-    showTokenFields.value = !isMobile && tt !== 'virtual'
+    showTokenType.value   = !isMobile
+    showTokenSN.value     = !isMobile && tt !== 'virtual'
     showTypeClient.value  = !isIABS
 
     if (isIABS) {
@@ -602,7 +604,7 @@ const typeCert = computed(() => [
                 </VCol>
 
                 <!-- token_type -->
-                <VCol cols="12" md="6" v-if="showTokenFields">
+                <VCol cols="12" md="6" v-if="showTokenType">
                     <AppSelect
                         v-model="clientData.token_type"
                         :label="$t('clients.token_type')"
@@ -614,7 +616,7 @@ const typeCert = computed(() => [
                 </VCol>
 
                 <!-- token_sn -->
-                <VCol cols="12" md="6" v-if="showTokenFields">
+                <VCol cols="12" md="6" v-if="showTokenSN">
                     <AppTextField
                         v-model="clientData.token_sn"
                         :label="$t('clients.token_sn')"
