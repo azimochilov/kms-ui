@@ -21,14 +21,21 @@ const deviceType = route.query.deviceType
 
 const clientData = ref(null)
 const certData   = ref(null)
-const loading    = ref(true)
-const writing    = ref(false)
+const loading        = ref(true)
+const writing        = ref(false)
+const alreadyWritten = ref(false)
+
+const certStatus = computed(() =>
+    certData.value?.status ?? clientData.value?.certificates?.[0]?.status
+)
 
 const canWriteToToken = computed(() =>
     certSn &&
     tokenSn &&
     deviceType &&
-    !['mobile', 'virtual'].includes(deviceType)
+    !['mobile', 'virtual'].includes(deviceType) &&
+    Number(certStatus.value) !== 4 &&
+    !alreadyWritten.value
 )
 
 onMounted(async () => {
@@ -79,6 +86,7 @@ const writeToToken = async () => {
         if (res.status === 'success') {
             try {
                 await $api(`certificates/imported/${certSn}/`, { method: 'POST' })
+                alreadyWritten.value = true
                 storetoast.successToast(t('certificates.messages.written_to_token'))
                 setSopin()
             } catch {

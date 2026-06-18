@@ -24,7 +24,6 @@ const selectedReissueItem = ref(null)
 const storetoast = useToast()
 const store = useCertificate()
 const userData = useCookie('userData')
-// console.log(userData.value?.role)
 const isAdmin = computed(() => userData.value?.role === 'admin')
 
 // --- table options ---
@@ -34,6 +33,7 @@ const status = ref(null)
 const searchQuery = ref('')
 const isAddNewUserDrawerVisible = ref(false)
 const updateDataId = ref(null)
+let searchDebounceTimer = null
 
 // --- revoke dialog ---
 const revokeDialog = ref(false)
@@ -65,7 +65,6 @@ const headers = computed(() => [
     { title: t('certificates.from_date'), key: 'cert_from' },
     { title: t('certificates.to_date'), key: 'cert_to' },
     { title: t('certificates.status'), key: 'status' },
-    // { title: 'pdf', key: 'pdf' },
     { title: t('settingsModule.action'), key: 'actions' },
 ])
 
@@ -116,64 +115,37 @@ const statusText = (statusValue) => {
     return { class: '', text: String(statusValue ?? '-') }
 }
 
-const tableItems = computed(() => {
-    const rawItems = store.certificates?.all_data?.length
-        ? store.certificates.all_data
-        : (store.certificates?.data ?? [])
-    const statusFilter = normalizeStatusFilter(status.value)
-    const search = String(searchQuery.value ?? '').trim().toLowerCase()
-
-    return rawItems.filter(item => {
-        if (statusFilter !== null && Number(item?.status) !== statusFilter)
-            return false
-
-        if (!search)
-            return true
-
-        const haystack = [
-            item?.cname,
-            item?.token_sn,
-            item?.cert_sn,
-            item?.cert_from,
-            item?.cert_to,
-            statusText(item?.status).text,
-        ]
-            .filter(Boolean)
-            .map(value => String(value).toLowerCase())
-            .join(' ')
-
-        return haystack.includes(search)
-    })
-})
+// --- server tomonli ma'lumot (klient filtri olib tashlandi) ---
+const tableData = computed(() => store.certificates?.data ?? [])
 
 const totalPages = computed(() => {
+    const total = Number(store.certificates?.pagination?.total ?? 0)
     const perPage = Number(options.value.itemsPerPage)
     if (perPage <= 0)
         return 1
 
-    return Math.max(1, Math.ceil(tableItems.value.length / perPage))
+    return Math.max(1, Math.ceil(total / perPage))
 })
 
-const paginatedItems = computed(() => {
-    const perPage = Number(options.value.itemsPerPage)
-    if (perPage <= 0)
-        return tableItems.value
-
-    const start = (options.value.page - 1) * perPage
-
-    return tableItems.value.slice(start, start + perPage)
-})
-
-// --- refresh ---
+// --- refresh: backendga search/status/page/per_page yuboradi ---
 const refresh = () => {
     load.value = true
-    store.fetchStatusReport()
+    store.fetchStatusReport(options.value.itemsPerPage, options.value.page, {
+        search: searchQuery.value,
+        status: normalizeStatusFilter(status.value),
+    })
         .then(() => {
             load.value = false
         })
         .catch(error => {
-            if (error.response?.status >= 500) {
+            if (error?.response?.status >= 500) {
                 storetoast.errorToast('server xatoligi')
+            } else {
+                const msg = error?.response?._data?.message
+                    ?? error?.response?._data?.detail
+                    ?? error?.message
+                    ?? t('error')
+                storetoast.errorToast(String(msg))
             }
             load.value = false
         })
@@ -181,22 +153,54 @@ const refresh = () => {
 
 onMounted(() => refresh())
 
-watch(status, newValue => {
-    const normalizedStatus = normalizeStatusFilter(newValue)
-    if (newValue !== normalizedStatus) {
-        status.value = normalizedStatus
+onBeforeUnmount(() => {
+    if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer)
+        searchDebounceTimer = null
+    }
+})
+
+// --- watchers: har bir o'zgarishda backendga murojat ---
+watch(() => options.value.itemsPerPage, newValue => {
+    if (!Number.isFinite(Number(newValue)))
+        return
+    if (options.value.page !== 1) {
+        options.value.page = 1
         return
     }
+    refresh()
+})
 
-    options.value.page = 1
+watch(() => options.value.page, newValue => {
+    if (!newValue)
+        return
+    refresh()
+})
+
+watch(status, newValue => {
+    const normalized = normalizeStatusFilter(newValue)
+    if (newValue !== normalized) {
+        status.value = normalized
+        return
+    }
+    if (options.value.page !== 1) {
+        options.value.page = 1
+        return
+    }
+    refresh()
 })
 
 watch(searchQuery, () => {
-    options.value.page = 1
-})
+    if (searchDebounceTimer)
+        clearTimeout(searchDebounceTimer)
 
-watch(() => options.value.itemsPerPage, () => {
-    options.value.page = 1
+    searchDebounceTimer = setTimeout(() => {
+        if (options.value.page !== 1) {
+            options.value.page = 1
+            return
+        }
+        refresh()
+    }, 350)
 })
 
 const onItemsPerPageChange = value => {
@@ -247,7 +251,6 @@ const downloadPDF = async (item) => {
     }
 }
 
-
 const updateItem = (item) => {
     selectedReissueItem.value = item
     reissueDialog.value = true
@@ -260,18 +263,10 @@ const onReissued = () => {
 // Tokenga yozish — WebSocket orqali
 const writeToToken = async (item) => {
     let certData
-    //try {
-        const res = await $api(`certificates/${item.cert_sn}/`)
-        console.log(res)
-        
-        const data = res?.data ?? res
-        certData = item.device_type === 'smartcard' ? data.base64 : data.pfx
-    //} catch {
-    
-    	console.log(item)
-        //storetoast.errorToast(t('certificates.messages.ws_error'))
-        //return
-    //}
+
+    const res = await $api(`certificates/${item.cert_sn}/`)
+    const data = res?.data ?? res
+    certData = item.device_type === 'smartcard' ? data.base64 : data.pfx
 
     if (!certData) {
         storetoast.errorToast(t('certificates.messages.pfx_not_found'))
@@ -343,7 +338,9 @@ const setSopin = (item) => {
         } else {
             storetoast.errorToast(res.comments)
         }
+        // tokenga yozib bo'lingach ro'yxatni yangilaymiz -> status o'zgaradi -> "tokenga yozish" actioni yo'qoladi
         refresh()
+        ws.close()
     }
 
     ws.onerror = () => {
@@ -393,14 +390,12 @@ const downloadPFX = async (item) => {
         const a = document.createElement('a')
         a.download = `${item.cert_sn}.pfx`
 
-        // pfxData URL bo'lsa — to'g'ridan-to'g'ri yuklab olish
         if (typeof pfxData === 'string' && (pfxData.startsWith('http://') || pfxData.startsWith('https://'))) {
             a.href = pfxData
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
         } else {
-            // pfxData base64 bo'lsa — blob yaratib yuklab olish
             const bytes = Uint8Array.from(atob(String(pfxData)), c => c.charCodeAt(0))
             const blob = new Blob([bytes], { type: 'application/x-pkcs12' })
             const url = URL.createObjectURL(blob)
@@ -417,35 +412,6 @@ const downloadPFX = async (item) => {
         storetoast.errorToast(t('certificates.messages.ws_error'))
     }
 }
-
-// const updateItem = async (item) => {
-//     // file input ochish
-//     const input = document.createElement('input')
-//     input.type = 'file'
-//     input.accept = '.pdf'
-//     // console.log(item)
-//     input.onchange = async (e) => {
-//         const file = e.target.files[0]
-//         if (!file) return
-//
-//         const formData = new FormData()
-//         formData.append('cert_id', item.id)
-//         formData.append('file', file)
-//
-//         try {
-//             await $api('certificates/reissue/', {
-//                 method: 'POST',
-//                 body: formData,
-//             })
-//             storetoast.successToast(t('certificate.updating'))
-//             refresh()
-//         } catch (err) {
-//             storetoast.errorToast(err?.data?.error || 'Xatolik yuz berdi')
-//         }
-//     }
-//
-//     input.click()
-// }
 </script>
 
 <template>
@@ -517,7 +483,7 @@ const downloadPFX = async (item) => {
 
         <VDataTable
             :headers="headers"
-            :items="paginatedItems"
+            :items="tableData"
             :items-per-page="-1"
             :loading="load"
             :hover="true"
@@ -593,8 +559,6 @@ const downloadPFX = async (item) => {
                             </div>
                         </template>
 
-                        <!-- pdf column endi kerak emas, headers dan olib tashlang -->
-
                         <!-- status -->
                         <template v-else-if="column.key === 'status'">
                           <span v-if="item.status != null" :class="statusText(item.status)?.class">
@@ -602,14 +566,7 @@ const downloadPFX = async (item) => {
                           </span>
                         </template>
 
-<!--                        &lt;!&ndash; pdf &ndash;&gt;-->
-<!--                        <template v-else-if="column.key === 'pdf'">-->
-<!--                            <VListItemTitle class="cursor-pointer text-cancel" @click="downloadPDF(item)">-->
-<!--                                {{ $t('certificates.download') }}-->
-<!--                            </VListItemTitle>-->
-<!--                        </template>-->
-
-                            <!-- default -->
+                            <!-- № -->
                             <template v-else-if="column.key === 'id'">
                                 {{
                                     options.itemsPerPage > 0
@@ -634,7 +591,7 @@ const downloadPFX = async (item) => {
                 <VCardText class="pt-2">
                     <div class="d-flex justify-end">
                         <VPagination
-                            v-if="tableItems.length"
+                            v-if="tableData.length"
                             v-model="options.page"
                             :total-visible="$vuetify.display.smAndDown ? 3 : 5"
                             :length="totalPages"
@@ -645,7 +602,7 @@ const downloadPFX = async (item) => {
         </VDataTable>
     </VCard>
 
-    <!-- Dialogs — template tashqarisida, VCard dan keyin -->
+    <!-- Dialogs -->
     <RevokeDialog
         v-model="revokeDialog"
         :cert-sn="selectedCertSn"

@@ -140,7 +140,7 @@ export const useCertificate = defineStore("certificate", {
 
 
 
-        async fetchStatusReport() {
+        async fetchStatusReportOld() {
             try {
                 const res = await this.fetchFromAvailableEndpoints({
                     page_size: 5000,
@@ -157,6 +157,43 @@ export const useCertificate = defineStore("certificate", {
             }
             catch {
                 // Keep the previous report if stats request fails.
+            }
+        },
+        
+        async fetchStatusReport(per_page = 10, page = 1, filters = {}) {
+            const query = { page: page || 1 }
+        
+            if (per_page && per_page > 0)
+                query.page_size = per_page
+            else
+                query.page_size = 5000   // "All"
+        
+            if (filters.search)
+                query.search = filters.search
+        
+            if (filters.status !== null && filters.status !== undefined && filters.status !== '')
+                query.status = filters.status
+        
+            const res = await this.fetchFromAvailableEndpoints(query)
+            const payload = res?.data ?? res?.result ?? res
+        
+            const rawItems = this.extractRawItems(payload)
+            const items = rawItems.map((item, index) => this.normalizeCertificate(item, index))
+        
+            const report = payload?.status_report ?? {}
+        
+            this.certificates = {
+                data: items,
+                all_data: items,
+                pagination: {
+                    total: Number(payload?.count ?? payload?.pagination?.total ?? items.length),
+                },
+                status_report: {
+                    active: Number(report.active ?? 0),
+                    updated: Number(report.updated ?? 0),
+                    rejected: Number(report.rejected ?? 0),
+                    total: Number(report.total ?? payload?.count ?? items.length),
+                },
             }
         },
 
