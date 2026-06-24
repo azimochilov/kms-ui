@@ -75,7 +75,7 @@ const updateVisibility = () => {
     showTypeClient.value  = !isIABS
 
     if (isIABS) {
-        // Пользоват iABS: описание, должнсть, пинфл — исовано
+        // Пользоват iABS: описани, должнсть, пинфл — исовано
         showSname.value   = false
         showAccname.value = false
         showDesc.value    = true
@@ -93,24 +93,20 @@ const updateVisibility = () => {
             showInn.value   = true
             showPinfl.value = true
         } else {
-            showInn.value   = tc === 1   // Юриическое лцо → ИН
-            showPinfl.value = tc === 2   // Фзичкое лцо   ПИФЛ
+            showInn.value   = tc === 1   // Юиическое лцо → И
+            showPinfl.value = tc === 2   // Фзичкое ло   ПИФЛ
         }
     }
 }
 
 // --- OU prefix map (совпадае с PHP лгикой) ---
 const OU_MAP = {
-    2: 'UZC012',   // mobile iABS
-    1: 'UZB012',   // iABS user
-    3: 'UZC012',   // mobile PFX
+    1: 'UZC012',   // Ibank
     4: 'UZC012',   // mobile PFX alt
-    7: 'UZM012',   // Metin
-    5: 'UZJ012',   // JOYDA
-    6: 'UZS012',   // CROBS
+    3: 'UZB012',   // iABS user
 }
 
-// Вычияет org_unit разу при измнени fido_user_id л cert_type
+// Вычият org_unit разу при имнени fido_user_id л cert_type
 const computeOrgUnit = () => {
     const certType = clientData.value.cert_type
     const fidoId   = clientData.value.fido_user_id
@@ -504,7 +500,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- sname  Директор (б + обильный) -->
+                <!-- sname  Дректор (б + обильный) -->
                 <VCol cols="12" md="6" v-if="showSname">
                     <AppTextField
                         v-model="clientData.sname"
@@ -522,7 +518,7 @@ const typeCert = computed(() => [
                     />
                 </VCol>
 
-                <!-- description — исаи/Департамент (iABS) -->
+                <!-- description  исаи/Департамен (iABS) -->
                 <VCol cols="12" md="6" v-if="showDesc">
                     <AppTextField
                         v-model="clientData.description"

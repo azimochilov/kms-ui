@@ -513,7 +513,7 @@ const downloadPFX = async (item) => {
                                             </VListItem>
 
                                             <!-- PFX yuklab olish  status=2 (READY_TO_INSTALL) yoki cng=0 (RSA) -->
-                                            <VListItem
+                                            <!-- <VListItem
                                                 v-if="item.status == 2 || item.cng == 0"
                                                 @click="downloadPFX(item)"
                                             >
@@ -522,7 +522,7 @@ const downloadPFX = async (item) => {
                                                 </template>
                                                 <VListItemTitle>{{ $t('certificates.actions.download_pfx') }}</VListItemTitle>
                                             </VListItem>
-
+                                                -->
                                             <!-- Bekor qilish -->
                                             <VListItem
                                                 v-if="item.status != 0"

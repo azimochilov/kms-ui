@@ -83,6 +83,7 @@
         { title: t('clients.inn'), key: 'inn' },
         { title: t('clients.phone'), key: 'phone' },
         { title: t('settingsModule.branch'), key: 'branch' },
+        { title: t('logs.created_at'), key: 'created_at' },
         { title: t('clients.primary_device_type'), key: 'primary_device_type' },
         { title: t('settingsModule.status'), key: 'status' },
         { title: t('settingsModule.action'), key: 'actions' },
@@ -210,6 +211,7 @@
             searchDebounceTimer = null
         }
     })
+    
     const getRowProps = (item) => {
 
         if (!item) return {}
@@ -217,7 +219,20 @@
         if (item.status === 0) return 'green-row'
         return {}
     }
-
+    
+    const formatDate = (value) => {
+        if (!value) return '—'
+        const d = new Date(value)
+        if (Number.isNaN(d.getTime())) return String(value)
+        return d.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+    }
+    
     watch(() => options.value.itemsPerPage, newValue => {
         if (!Number.isFinite(Number(newValue)))
             return
@@ -367,7 +382,11 @@
                                             : index + 1
                                     }}
                                 </template>
-
+                               
+                                <template v-else-if="column.key === 'created_at'">
+                                    {{ formatDate(item.created_at) }}
+                                </template>
+                                
                                 <template v-else-if="column.key === 'primary_device_type'">
                                     <VChip
                                         :color="deviceTypeChip(item.primary_device_type).color"
